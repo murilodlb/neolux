@@ -23,7 +23,7 @@ function M.get(palette, opts)
         Cursor       = { fg = palette.bg, bg = palette.orange },
         CursorLine   = { bg = palette.gray1 },
         CursorColumn = { link = "CursorLine" },
-        LineNr       = { fg = palette.orange },
+        LineNr       = { fg = palette.gray2 },
         CursorLineNr = { fg = palette.yellow, bg = bg, bold = true },
         MatchParen   = { fg = palette.orange, bg = palette.gray2, bold = true },
         FieryYank    = { fg = palette.fg, bg = palette.orange, bold = true },
