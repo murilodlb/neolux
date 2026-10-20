@@ -66,7 +66,7 @@ function M.get(palette, opts)
         -- 2. TREE-SITTER GROUPS
         ["@variable"]           = with_style({ fg = palette.fg }, variable_style), -- Normal variables
         ["@variable.builtin"]   = { fg = palette.green }, -- 'self' or 'this'
-        ["@variable.parameter"] = { fg = palette.orange }, -- Function arguments
+        ["@variable.parameter"] = { fg = palette.fg },    -- Function arguments
         ["@variable.member"]    = { fg = palette.light_blue }, -- Attributes
         ["@function"]           = { link = "Function" },
         ["@function.builtin"]   = with_style({ fg = palette.light_blue }, function_style), -- print(), len()
