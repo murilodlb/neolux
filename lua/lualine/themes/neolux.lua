@@ -1,4 +1,4 @@
-local palette = require("neolux.palette")
+local palette = require("neolux").colors
 
 local section_c = { bg = palette.gray1, fg = palette.fg }
 

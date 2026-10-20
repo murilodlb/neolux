@@ -1,1 +1,1 @@
-require("neolux").setup()
+require("neolux").load()

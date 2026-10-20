@@ -1,12 +1,26 @@
-local palette = require("neolux.palette")
-
 local M = {}
 
-function M.setup()
-    local groups = {
+local function with_style(base, style)
+    if type(style) == "table" then
+        return vim.tbl_extend("force", base, style)
+    end
+    return base
+end
+
+function M.get(palette, opts)
+    palette = palette or require("neolux.palette")
+    opts = opts or require("neolux.config").options
+
+    local styles = opts.styles or {}
+    local comment_style = vim.tbl_extend("force", { italic = opts.italic_comments ~= false }, styles.comments or {})
+    local keyword_style = vim.tbl_extend("force", { bold = true }, styles.keywords or {})
+    local function_style = styles.functions or {}
+    local variable_style = styles.variables or {}
+
+    return {
         -- 1. SYNTAX GROUPS
         -- These act as a fallback and foundation.
-        Comment        = { fg = palette.beige, italic = true },
+        Comment        = with_style({ fg = palette.beige }, comment_style),
         -- Constants
         Constant       = { fg = palette.purple },
         String         = { fg = palette.beige },
@@ -15,16 +29,16 @@ function M.setup()
         Float          = { fg = palette.purple },
         Boolean        = { fg = palette.purple },
         -- Identifiers
-        Identifier     = { fg = palette.fg },
-        Function       = { fg = palette.green },
+        Identifier     = with_style({ fg = palette.fg }, variable_style),
+        Function       = with_style({ fg = palette.green }, function_style),
         -- Statements
         Statement      = { fg = palette.pink },
-        Conditional    = { fg = palette.pink, bold = true }, -- if, then, else
-        Repeat         = { fg = palette.pink, bold = true }, -- for, while
+        Conditional    = with_style({ fg = palette.pink }, keyword_style), -- if, then, else
+        Repeat         = with_style({ fg = palette.pink }, keyword_style), -- for, while
         Label          = { fg = palette.pink },
         Operator       = { fg = palette.pink },
-        Keyword        = { fg = palette.pink, bold = true },
-        Exception      = { fg = palette.pink, bold = true }, -- try, catch
+        Keyword        = with_style({ fg = palette.pink }, keyword_style),
+        Exception      = with_style({ fg = palette.pink }, keyword_style), -- try, catch
         -- Preprocessors
         PreProc        = { fg = palette.light_blue }, -- import, from
         Include        = { fg = palette.blue },
@@ -50,15 +64,15 @@ function M.setup()
         Todo           = { fg = palette.bg, bg = palette.yellow, bold = true },
 
         -- 2. TREE-SITTER GROUPS
-        ["@variable"]           = { fg = palette.fg }, -- Normal variables
+        ["@variable"]           = with_style({ fg = palette.fg }, variable_style), -- Normal variables
         ["@variable.builtin"]   = { fg = palette.green }, -- 'self' or 'this'
         ["@variable.parameter"] = { fg = palette.orange }, -- Function arguments
         ["@variable.member"]    = { fg = palette.light_blue }, -- Attributes
         ["@function"]           = { link = "Function" },
-        ["@function.builtin"]   = { fg = palette.light_blue }, -- print(), len()
+        ["@function.builtin"]   = with_style({ fg = palette.light_blue }, function_style), -- print(), len()
         ["@keyword"]            = { link = "Keyword" },
-        ["@keyword.function"]   = { fg = palette.light_blue }, -- 'def' or 'function'
-        ["@keyword.return"]     = { fg = palette.pink, bold = true }, -- 'return'
+        ["@keyword.function"]   = with_style({ fg = palette.light_blue, bold = false }, styles.keywords), -- 'def' or 'function'
+        ["@keyword.return"]     = with_style({ fg = palette.pink }, keyword_style), -- 'return'
         ["@type"]               = { link = "Type" },
         ["@type.builtin"]       = { link = "Type" }, -- built-in types
         ["@constant"]           = { link = "Constant" },
@@ -116,10 +130,10 @@ function M.setup()
         ["@function.call"]      = { link = "Function" },
         ["@method.call"]        = { link = "Function" },
         ["@keyword.operator"]   = { link = "Operator" }, -- e.g. 'and', 'or', 'in', 'sizeof'
-        ["@keyword.coroutine"]  = { fg = palette.pink, bold = true }, -- async, await, yield
+        ["@keyword.coroutine"]  = with_style({ fg = palette.pink }, keyword_style), -- async, await, yield
         ["@keyword.storage"]    = { link = "StorageClass" }, -- static, const, mut, extern
         ["@keyword.type"]       = { link = "Type" },
-        ["@string.documentation"] = { fg = palette.beige, italic = true }, -- Python docstrings / JSDoc
+        ["@string.documentation"] = with_style({ fg = palette.beige }, comment_style), -- Python docstrings / JSDoc
         ["@label"]              = { fg = palette.pink }, -- C/C++ goto labels, loop tags
         ["@lsp.type.parameter"]                  = { fg = palette.orange },
         ["@lsp.typemod.variable.parameter"]      = { fg = palette.orange },
@@ -128,17 +142,10 @@ function M.setup()
         ["@lsp.typemod.parameter.definition"]    = { fg = palette.orange },
         ["@lsp.typemod.parameter.readonly"]      = { fg = palette.orange },
 
-        -- 3. RAINBOW DELIMITERS
+        -- 3. BRACKETS
         ["@punctuation.bracket"]           = { fg = palette.yellow }, -- Fallback for standard brackets
         ["@punctuation.bracket.delimiter"] = { link = "@punctuation.bracket" },
         ["@lsp.type.bracket"]              = { link = "@punctuation.bracket" },
-        RainbowDelimiterYellow = { fg = palette.pink }, -- I know this is not yellow
-        RainbowDelimiterOrange = { fg = palette.orange },
-        RainbowDelimiterRed    = { fg = palette.yellow },
-        RainbowDelimiterCyan   = { fg = palette.light_blue },
-        RainbowDelimiterBlue   = { fg = palette.blue },
-        RainbowDelimiterViolet = { fg = palette.purple },
-        RainbowDelimiterGreen  = {fg = palette.green},
 
         -- 4. MARKDOWN STRUCTURE
         ["@markup.heading.1.markdown"]  = { fg = palette.pink, bold = true },
@@ -154,28 +161,11 @@ function M.setup()
         ["@markup.list"]           = { fg = palette.pink },        -- Markdown bullets (- / *)
         ["@markup.list.checked"]   = { fg = palette.green },    -- [x] Checkboxes
         ["@markup.list.unchecked"] = { fg = palette.gray3 },    -- [ ] Checkboxes
-
-        -- 5. GIT SIGNS
-        GitSignsAdd    = { fg = palette.green, bg = "NONE" }, -- New lines
-        GitSignsChange = { fg = palette.yellow, bg = "NONE" }, -- Changed lines
-        GitSignsDelete = { fg = palette.pink, bg = "NONE" },   -- Deleted lines
-        DiffAdd    = { fg = palette.green, bg = palette.gray1 },
-        DiffChange = { fg = palette.yellow, bg = palette.gray1 },
-        DiffDelete = { fg = palette.pink, bg = palette.gray1 },
-        DiffText   = { fg = palette.fg, bg = palette.gray2, bold = true },
-
-        -- 6. LSP DIAGNOSTICS
-        DiagnosticError = { fg = palette.pink },
-        DiagnosticWarn  = { fg = palette.yellow },
-        DiagnosticInfo  = { fg = palette.light_blue },
-        DiagnosticHint  = { fg = palette.beige },
-        DiagnosticUnderlineError = { sp = palette.pink, undercurl = true },
-        DiagnosticUnderlineWarn  = { sp = palette.yellow, undercurl = true },
-        DiagnosticUnderlineInfo  = { sp = palette.light_blue, undercurl = true },
-        DiagnosticUnderlineHint  = { sp = palette.beige, undercurl = true },
     }
+end
 
-    -- Loop through and apply
+function M.setup(palette, opts)
+    local groups = M.get(palette, opts)
     for group, settings in pairs(groups) do
         vim.api.nvim_set_hl(0, group, settings)
     end
