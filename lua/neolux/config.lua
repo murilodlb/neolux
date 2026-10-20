@@ -1,6 +1,7 @@
 local M = {}
 
 M.defaults = {
+    cache = true,
     transparent = false,
     italic_comments = true,
     styles = {

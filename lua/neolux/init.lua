@@ -5,6 +5,23 @@ local M = {}
 
 M.colors = vim.deepcopy(base_palette)
 
+local function register_commands()
+    if M._commands_registered then
+        return
+    end
+    M._commands_registered = true
+
+    vim.api.nvim_create_user_command("NeoluxCompile", function()
+        M.compile()
+        vim.notify("Neolux: compiled highlights to bytecode cache", vim.log.levels.INFO)
+    end, { desc = "Compile Neolux colorscheme highlights to bytecode" })
+
+    vim.api.nvim_create_user_command("NeoluxClean", function()
+        M.clean()
+        vim.notify("Neolux: cleared bytecode cache", vim.log.levels.INFO)
+    end, { desc = "Clear Neolux compiled bytecode cache" })
+end
+
 function M.setup(opts)
     config.setup(opts)
     local colors = vim.deepcopy(base_palette)
@@ -12,16 +29,25 @@ function M.setup(opts)
         config.options.on_colors(colors)
     end
     M.colors = colors
+    register_commands()
+end
+
+function M.compile()
+    local opts = config.options
+    local colors = vim.deepcopy(base_palette)
+    if type(opts.on_colors) == "function" then
+        opts.on_colors(colors)
+    end
+    M.colors = colors
+    return require("neolux.compiler").compile(opts, colors)
+end
+
+function M.clean()
+    require("neolux.compiler").clean()
 end
 
 function M.load()
-    vim.cmd("hi clear")
-    if vim.fn.exists("syntax_on") == 1 then
-        vim.cmd("syntax reset")
-    end
-
-    vim.o.background = "dark"
-    vim.g.colors_name = "neolux"
+    register_commands()
 
     local opts = config.options
     local colors = vim.deepcopy(base_palette)
@@ -30,22 +56,20 @@ function M.load()
     end
     M.colors = colors
 
-    local highlights = {}
-    local modules = {
-        require("neolux.editor").get(colors, opts),
-        require("neolux.syntax").get(colors, opts),
-        require("neolux.plugins").get(colors, opts),
-    }
-
-    for _, mod_hl in ipairs(modules) do
-        for group, settings in pairs(mod_hl) do
-            highlights[group] = settings
-        end
+    if opts.cache ~= false then
+        require("neolux.compiler").load_or_compile(opts, colors)
+        return
     end
 
-    if type(opts.on_highlights) == "function" then
-        opts.on_highlights(highlights, colors)
+    vim.cmd("hi clear")
+    if vim.fn.exists("syntax_on") == 1 then
+        vim.cmd("syntax reset")
     end
+
+    vim.o.background = "dark"
+    vim.g.colors_name = "neolux"
+
+    local highlights = require("neolux.compiler").resolve_highlights(opts, colors)
 
     for group, settings in pairs(highlights) do
         vim.api.nvim_set_hl(0, group, settings)
