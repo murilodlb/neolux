@@ -17,7 +17,7 @@ Adicione o seguinte spec em sua configuração — normalmente em `~/.config/nvi
 ```lua
 return {
     {
-        "MuriloBarros304/neolux",
+        "murilodlb/neolux",
         lazy = false,
         priority = 1000,
         config = function()
@@ -34,7 +34,7 @@ Se você usa a distribuição [LazyVim](https://www.lazyvim.org/), crie (ou edit
 ```lua
 return {
     {
-        "MuriloBarros304/neolux",
+        "murilodlb/neolux",
         lazy = false,
         priority = 1000,
         config = function()
@@ -56,7 +56,7 @@ Você pode instalar manualmente clonando o repositório diretamente na pasta de 
 
 ```bash
 # Linux / macOS
-git clone https://github.com/MuriloBarros304/neolux \
+git clone https://github.com/murilodlb/neolux \
   ~/.local/share/nvim/site/pack/themes/start/neolux
 ```
 
@@ -76,7 +76,7 @@ colorscheme neolux
 
 ```lua
 use {
-    "MuriloBarros304/neolux",
+    "murilodlb/neolux",
     config = function()
         vim.cmd("colorscheme neolux")
     end,
@@ -88,7 +88,7 @@ Após salvar o arquivo, execute `:PackerSync` dentro do Neovim.
 ### 5. vim-plug
 
 ```vim
-Plug 'MuriloBarros304/neolux'
+Plug 'murilodlb/neolux'
 ```
 
 Após adicionar a linha acima entre `call plug#begin()` e `call plug#end()`, execute `:PlugInstall`. Em seguida, adicione ao final do seu `init.vim`:

@@ -13,6 +13,14 @@ local colors = {
     purple     = "#9c6de7", -- None, NULL, inner brackets
     blue       = "#1E90FF", -- Inner brackets
     dark_blue  = "#011F4B", -- Some text colors
+
+    -- Dark subtle tints for diagnostics & diff backgrounds on pure black
+    tint_pink   = "#2a0a16", -- Subtle red/pink tint (errors, deletions)
+    tint_yellow = "#261e05", -- Subtle yellow tint (warnings, modifications)
+    tint_blue   = "#091b2e", -- Subtle blue tint (info, diff changes)
+    tint_green  = "#0d2614", -- Subtle green tint (ok, additions)
+    tint_beige  = "#1f1d10", -- Subtle beige tint (hints)
+    diff_text   = "#1a3b5c", -- Diff text inline change highlight
 }
 
 return colors
