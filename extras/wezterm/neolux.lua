@@ -8,9 +8,9 @@ return {
     background = "#000000",
 
     -- Cursor Colors
-    cursor_bg = "#fc971f",
+    cursor_bg = "#f98800",
     cursor_fg = "#000000",
-    cursor_border = "#fc971f",
+    cursor_border = "#f98800",
 
     -- Selection Colors
     selection_fg = "#000000",
@@ -24,22 +24,22 @@ return {
     ansi = {
         "#0c0c0c", -- black   (gray1)
         "#D90000", -- red
-        "#4fe275", -- green   (green)
-        "#ffd700", -- yellow  (yellow)
+        "#01de82", -- green   (green)
+        "#ffcc00", -- yellow  (yellow)
         "#363199", -- blue    (navy)
         "#723EC3", -- magenta (purple)
-        "#66d9ef", -- cyan    (light_blue)
+        "#00ffff", -- cyan    (light_blue)
         "#ffffff", -- white   (fg)
     },
 
     -- Bright ANSI Colors (The 8 bright/bold colors)
     brights = {
-        "#393e46", -- bright black   (gray2)
-        "#f84285", -- bright red     (pink)
+        "#3c3c3a", -- bright black   (gray2)
+        "#e20372", -- bright red     (pink)
         "#08CB00", -- bright green   (green)
         "#e6db74", -- bright yellow  (beige - distinct from standard yellow)
-        "#1e90ff", -- bright blue    (dark_blue)
-        "#9c6de7", -- bright magenta (purple)
+        "#2495ff", -- bright blue    (blue)
+        "#8b53fe", -- bright magenta (purple)
         "#92EEFF", -- bright cyan    (light_blue)
         "#ffffff", -- bright white   (fg)
     },
@@ -57,7 +57,7 @@ return {
             fg_color = "#57595B",
         },
         inactive_tab_hover = {
-            bg_color = "#393e46",
+            bg_color = "#3c3c3a",
             fg_color = "#ffffff",
         },
         new_tab = {
@@ -65,7 +65,7 @@ return {
             fg_color = "#57595B",
         },
         new_tab_hover = {
-            bg_color = "#fc971f",
+            bg_color = "#f98800",
             fg_color = "#000000",
             intensity = "Bold",
         },

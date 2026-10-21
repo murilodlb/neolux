@@ -57,8 +57,8 @@ function M.get(palette, opts)
         PmenuKindSel  = { fg = palette.light_blue, bg = palette.gray2, bold = true },
         PmenuExtra    = { fg = palette.gray3, bg = palette.gray1 },
         PmenuExtraSel = { fg = palette.fg, bg = palette.gray2 },
-        PmenuMatch    = { fg = palette.orange, bg = palette.gray1, bold = true },
-        PmenuMatchSel = { fg = palette.orange, bg = palette.gray2, bold = true },
+        PmenuMatch    = { fg = palette.green, bg = palette.gray1, bold = true },
+        PmenuMatchSel = { fg = palette.green, bg = palette.gray2, bold = true },
         PmenuSbar     = { bg = palette.gray1 },
         PmenuThumb    = { bg = palette.gray3 },
 
@@ -72,7 +72,7 @@ function M.get(palette, opts)
         -- 8. Tabs
         TabLineSel   = { fg = palette.gray2, bg = palette.orange, bold = true },
         TabLine      = { fg = palette.fg, bg = palette.gray1 },
-        TabLineFill  = { bg = palette.gray2 },
+        TabLineFill  = { bg = palette.gray1 },
 
         -- 9. LSP Diagnostics
         DiagnosticError       = { fg = palette.pink },
