@@ -19,14 +19,16 @@ return {
     -- UI Chrome
     scrollbar_thumb = "#57595B",
     split = "#57595B",
+    green      = "#4fe275", -- Function names
+    pink       = "#f84285", -- For, while, from, keywords
 
     -- Standard ANSI Colors (The base 8 colors)
     ansi = {
         "#0c0c0c", -- black   (gray1)
         "#D90000", -- red
-        "#01de82", -- green   (green)
+        "#4fe275", -- green   (green)
         "#ffcc00", -- yellow  (yellow)
-        "#363199", -- blue    (navy)
+        "#044b8b", -- blue
         "#723EC3", -- magenta (purple)
         "#00ffff", -- cyan    (light_blue)
         "#ffffff", -- white   (fg)
@@ -35,7 +37,7 @@ return {
     -- Bright ANSI Colors (The 8 bright/bold colors)
     brights = {
         "#3c3c3a", -- bright black   (gray2)
-        "#e20372", -- bright red     (pink)
+        "#f84285", -- bright red     (pink)
         "#08CB00", -- bright green   (green)
         "#e6db74", -- bright yellow  (beige - distinct from standard yellow)
         "#2495ff", -- bright blue    (blue)

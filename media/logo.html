@@ -4,7 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEOLUX</title>
+    <!-- Web font fallback for Adwaita Sans -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gjsify/adwaita-fonts/index.css">
     <style>
+        /* Local Adwaita Mono font mapping */
+        @font-face {
+            font-family: 'Adwaita Mono';
+            src: local('AdwaitaMono Nerd Font Bold'),
+                 local('AdwaitaMono Nerd Font'),
+                 local('AdwaitaMono Nerd Font Propo Bold'),
+                 local('AdwaitaMono Nerd Font Propo'),
+                 local('Adwaita Mono Bold'),
+                 local('Adwaita Mono');
+            font-weight: bold;
+            font-style: normal;
+        }
+
         body {
             background-color: #000000; /* bg */
             margin: 0;
@@ -12,7 +27,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'AdwaitaMono Nerd Font', 'Adwaita Mono', 'Adwaita Sans', 'Adwaita', monospace;
             overflow: hidden;
         }
 
@@ -24,8 +39,8 @@
         }
 
         /* Palette Colors */
-        .c-light-blue { color: #66d9ef; }
-        .c-blue       { color: #1E90FF; }
+        .c-light-blue { color: #00ffff; }
+        .c-blue       { color: #044b8b; }
     </style>
 </head>
 <body>
