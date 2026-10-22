@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  stylua:
+    name: StyLua
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run StyLua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check .
+
+  smoke-test:
+    name: Smoke Test (Neovim Headless)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: Load colorscheme in headless Neovim
+        run: |
+          nvim --headless -u NONE \
+            --cmd "set rtp+=." \
+            --cmd "set termguicolors" \
+            -c "colorscheme neolux" \
+            -c "lua assert(vim.g.colors_name == 'neolux', 'neolux failed to load')" \
+            -c "qall!"
+
+      - name: Run checkhealth and help tags verification
+        run: |
+          nvim --headless -u NONE \
+            --cmd "set rtp+=." \
+            -c "lua require('neolux.health').check()" \
+            -c "helptags doc" \
+            -c "help neolux" \
+            -c "qall!"

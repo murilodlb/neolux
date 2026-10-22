@@ -19,8 +19,6 @@ return {
     -- UI Chrome
     scrollbar_thumb = "#57595B",
     split = "#57595B",
-    green      = "#4fe275", -- Function names
-    pink       = "#f84285", -- For, while, from, keywords
 
     -- Standard ANSI Colors (The base 8 colors)
     ansi = {

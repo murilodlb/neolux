@@ -1,0 +1,263 @@
+*neolux.txt*   Tema de alto contraste com fundo puro (#000000) para o Neovim
+
+==============================================================================
+SUMÁRIO                                                      *neolux-sumario*
+
+    1. Introdução ................................. |neolux|
+    2. Requisitos ................................. |neolux-requisitos|
+    3. Instalação ................................. |neolux-instalacao|
+    4. Configuração e Opções ...................... |neolux-configuracao|
+    5. Paleta de Cores ............................ |neolux-paleta|
+    6. Integrações de Plugins ..................... |neolux-plugins|
+    7. Lualine .................................... |neolux-lualine|
+    8. Compilação de Bytecode e Cache ............. |neolux-cache|
+    9. Comandos e API Lua ......................... |neolux-comandos|
+   10. Verificação de Saúde (Health Check) ........ |neolux-health|
+
+==============================================================================
+1. INTRODUÇÃO                                                        *neolux*
+
+O **Neolux** é um tema desenvolvido inteiramente em Lua puro para o Neovim,
+baseado no Monokai, oferecendo uma experiência visual de alto contraste com
+fundo puramente preto (`#000000`) e realces vibrantes.
+
+Para ativar o tema imediatamente: >lua
+    vim.cmd("colorscheme neolux")
+<
+Ou em Vimscript: >vim
+    colorscheme neolux
+<
+==============================================================================
+2. REQUISITOS                                             *neolux-requisitos*
+
+- Neovim >= 0.8.0 (com LuaJIT para suporte à compilação de bytecode)
+- Suporte a cores de 24 bits (`termguicolors` ativado): >lua
+    vim.opt.termguicolors = true
+<
+Execute `:checkhealth neolux` para validar seu ambiente.
+
+==============================================================================
+3. INSTALAÇÃO                                             *neolux-instalacao*
+
+Lazy.nvim ~
+Adicione o seguinte spec em sua configuração (ex.: `lua/plugins/theme.lua`): >lua
+    return {
+        {
+            "murilodlb/neolux",
+            lazy = false,
+            priority = 1000,
+            config = function()
+                vim.cmd("colorscheme neolux")
+            end,
+        },
+    }
+<
+LazyVim ~
+Em `~/.config/nvim/lua/plugins/colorscheme.lua`: >lua
+    return {
+        {
+            "murilodlb/neolux",
+            lazy = false,
+            priority = 1000,
+            config = function()
+                vim.cmd("colorscheme neolux")
+            end,
+        },
+        { "folke/tokyonight.nvim", enabled = false },
+    }
+<
+Pacote Nativo do Neovim ~
+Clone o repositório diretamente na pasta `pack` do Neovim: >sh
+    git clone https://github.com/murilodlb/neolux \
+      ~/.local/share/nvim/site/pack/themes/start/neolux
+<
+Packer.nvim ~
+>lua
+    use {
+        "murilodlb/neolux",
+        config = function()
+            vim.cmd("colorscheme neolux")
+        end,
+    }
+<
+vim-plug ~
+>vim
+    Plug 'murilodlb/neolux'
+    colorscheme neolux
+<
+==============================================================================
+4. CONFIGURAÇÃO E OPÇÕES                                *neolux-configuracao*
+                                                              *neolux-opcoes*
+
+Chame `require("neolux").setup(opts)` antes de executar `colorscheme neolux`
+caso deseje personalizar o comportamento padrão: >lua
+    require("neolux").setup({
+        cache = true,
+        transparent = false,
+        italic_comments = true,
+        styles = {
+            comments = { italic = true },
+            keywords = { bold = true },
+            functions = {},
+            variables = {},
+        },
+        on_colors = function(colors) end,
+        on_highlights = function(highlights, colors) end,
+        plugins = {
+            auto = true,
+        },
+    })
+    vim.cmd("colorscheme neolux")
+<
+Opções disponíveis:
+
+- `cache` (boolean, padrão: `true`)
+  Ativa ou desativa a compilação dos grupos de destaque para bytecode LuaJIT.
+
+- `transparent` (boolean, padrão: `false`)
+  Quando `true`, remove a cor de fundo (`bg = "NONE"`) da janela principal,
+  barras laterais e elementos de interface.
+
+- `italic_comments` (boolean, padrão: `true`)
+  Atalho para ativar/desativar itálico em comentários (`styles.comments.italic`).
+
+- `styles` (table)
+  Tabela de estilos repassados a `nvim_set_hl` para categorias sintáticas:
+  - `styles.comments` (padrão: `{ italic = true }`)
+  - `styles.keywords` (padrão: `{ bold = true }`)
+  - `styles.functions` (padrão: `{}`)
+  - `styles.variables` (padrão: `{}`)
+
+- `on_colors` (function(colors))
+  Callback executado sobre a tabela de cores da paleta antes de gerar os
+  grupos de destaque. Permite sobrescrever ou adicionar cores: >lua
+    require("neolux").setup({
+        on_colors = function(colors)
+            colors.bg = "#050505"
+        end,
+    })
+<
+- `on_highlights` (function(highlights, colors))
+  Callback executado após resolver todos os grupos de destaque, permitindo
+  customizar ou adicionar grupos específicos: >lua
+    require("neolux").setup({
+        on_highlights = function(hl, c)
+            hl.CursorLine = { bg = c.gray2 }
+        end,
+    })
+<
+- `plugins` (table)
+  Controla quais integrações de plugins são carregadas:
+  - `plugins.auto` (boolean, padrão: `true`): detecta automaticamente os
+    plugins instalados via `lazy.nvim` (ou carrega todos se `lazy.nvim` não
+    estiver presente).
+  - `plugins.all` (boolean, padrão: `false`): força o carregamento de todas as
+    integrações de plugins.
+  - Sobrescritas individuais por nome do módulo ou repositório (ex.:
+    `telescope = false` ou `["neo-tree.nvim"] = true`).
+
+==============================================================================
+5. PALETA DE CORES                                            *neolux-paleta*
+
+A paleta padrão pode ser inspecionada via `require("neolux").colors`:
+
+    Cor           Hex         Uso Principal ~
+    `bg`          `#000000`   Fundo principal (preto puro)
+    `fg`          `#ffffff`   Texto padrão, classes e variáveis
+    `gray1`       `#0c0c0c`   Janelas flutuantes, statusline e CursorLine
+    `gray2`       `#3c3c3a`   Números de linha, gutter e seleção de menu
+    `gray3`       `#57595B`   Bordas, divisórias e texto secundário
+    `orange`      `#f98800`   Cursor, efeito de yank e parâmetros
+    `beige`       `#e6db74`   Comentários e docstrings
+    `light_blue`  `#00ffff`   Palavras reservadas (`def`, `class`), tipos
+    `green`       `#4fe275`   Nomes de funções e métodos
+    `pink`        `#f84285`   Controle de fluxo (`for`, `while`, `return`)
+    `yellow`      `#ffcc00`   Strings, delimitadores e avisos
+    `purple`      `#8b53fe`   Constantes, números e booleanos
+    `blue`        `#2495ff`   Delimitadores internos e informações
+    `dark_blue`   `#044b8b`   Contraste de texto em barras de status
+    `tint_pink`   `#2a0a16`   Fundo sutil para erros e remoções em diff
+    `tint_yellow` `#261e05`   Fundo sutil para avisos e modificações
+    `tint_blue`   `#091b2e`   Fundo sutil para informações e diffs
+    `tint_green`  `#0d2614`   Fundo sutil para adições em diff e sucesso
+    `tint_beige`  `#1f1d10`   Fundo sutil para dicas (hints)
+    `diff_text`   `#1a3b5c`   Realce inline de alterações em diff
+
+==============================================================================
+6. INTEGRAÇÕES DE PLUGINS                                    *neolux-plugins*
+
+O Neolux inclui suporte nativo para Treesitter, LSP Diagnostics, Semantic
+Tokens e os seguintes plugins:
+
+- `blink.cmp` (`blink`)
+- `bufferline.nvim` (`bufferline`)
+- `gitsigns.nvim` (`gitsigns`)
+- `indent-blankline.nvim` / `mini.indentscope` (`indent-blankline`)
+- `lazy.nvim` (`lazy`)
+- `lualine.nvim` (via tema `neolux`)
+- `mason.nvim` (`mason`)
+- `neo-tree.nvim` (`neo-tree`)
+- `nvim-cmp` (`cmp`)
+- `rainbow-delimiters.nvim` (`rainbow-delimiters`)
+- `telescope.nvim` (`telescope`)
+
+==============================================================================
+7. LUALINE                                                   *neolux-lualine*
+
+Para utilizar o tema do Neolux no `lualine.nvim`: >lua
+    require("lualine").setup({
+        options = {
+            theme = "neolux",
+        },
+    })
+<
+==============================================================================
+8. COMPILAÇÃO DE BYTECODE E CACHE                              *neolux-cache*
+
+Na primeira vez em que o tema é carregado, o Neolux resolve todas as cores,
+grupos do editor, sintaxe, integrações de plugins e callbacks do usuário,
+compilando todas as chamadas `nvim_set_hl` em um único arquivo binário
+otimizado (`compiled.luac`) salvo em `stdpath("cache") .. "/neolux"`.
+
+Nas inicializações seguintes, o bytecode pré-compilado é carregado
+diretamente. O cache é invalidado e recompilado automaticamente através de um
+hash SHA-256 sempre que:
+- As opções de `require("neolux").setup({...})` mudam;
+- O bytecode de `on_colors` ou `on_highlights` é alterado;
+- A lista de plugins do `lazy.nvim` muda;
+- Qualquer arquivo-fonte do tema é modificado (`mtime`).
+
+==============================================================================
+9. COMANDOS E API LUA                                       *neolux-comandos*
+                                                                 *neolux-api*
+
+*:NeoluxCompile*
+    Força a recompilação imediata dos grupos de destaque para o cache em
+    bytecode (`stdpath("cache") .. "/neolux/compiled.luac"`).
+    Equivalente em Lua: `require("neolux").compile()`
+
+*:NeoluxClean*
+    Remove os arquivos de cache compilados (`compiled.luac` e `state.txt`).
+    Equivalente em Lua: `require("neolux").clean()`
+
+Funções do módulo `require("neolux")`:
+- `setup(opts)`: Configura o tema e registra os comandos de usuário.
+- `load()`: Carrega o tema (usando o cache se ativado).
+- `compile()`: Compila o tema para bytecode e retorna o chunk compilado.
+- `clean()`: Limpa os arquivos de cache do disco.
+
+==============================================================================
+10. VERIFICAÇÃO DE SAÚDE (HEALTH CHECK)                       *neolux-health*
+
+Execute o comando abaixo para diagnosticar problemas de configuração: >vim
+    :checkhealth neolux
+<
+O health check verifica:
+- Se a versão do Neovim é compatível (>= 0.8.0);
+- Se a opção `termguicolors` está habilitada (emitindo um aviso caso esteja
+  desligada);
+- Se o esquema de cores ativo é o `neolux`;
+- O estado atual do cache de bytecode compilado.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

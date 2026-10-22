@@ -2,17 +2,17 @@ local M = {}
 
 -- Map lazy.nvim plugin repository names to neolux plugin modules
 M.plugins = {
-    ["neo-tree.nvim"]           = "neo-tree",
-    ["lazy.nvim"]               = "lazy",
-    ["mason.nvim"]              = "mason",
-    ["telescope.nvim"]          = "telescope",
-    ["nvim-cmp"]                = "cmp",
-    ["blink.cmp"]               = "blink",
-    ["gitsigns.nvim"]           = "gitsigns",
-    ["indent-blankline.nvim"]   = "indent-blankline",
-    ["mini.indentscope"]        = "indent-blankline",
-    ["mini.nvim"]               = "indent-blankline",
-    ["bufferline.nvim"]         = "bufferline",
+    ["neo-tree.nvim"] = "neo-tree",
+    ["lazy.nvim"] = "lazy",
+    ["mason.nvim"] = "mason",
+    ["telescope.nvim"] = "telescope",
+    ["nvim-cmp"] = "cmp",
+    ["blink.cmp"] = "blink",
+    ["gitsigns.nvim"] = "gitsigns",
+    ["indent-blankline.nvim"] = "indent-blankline",
+    ["mini.indentscope"] = "indent-blankline",
+    ["mini.nvim"] = "indent-blankline",
+    ["bufferline.nvim"] = "bufferline",
     ["rainbow-delimiters.nvim"] = "rainbow-delimiters",
 }
 

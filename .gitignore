@@ -1,1 +1,3 @@
 *.txt
+!doc/*.txt
+doc/tags
