@@ -133,7 +133,7 @@ function M.get(palette, opts)
         ["@keyword.operator"] = { link = "Operator" }, -- e.g. 'and', 'or', 'in', 'sizeof'
         ["@keyword.coroutine"] = with_style({ fg = palette.pink }, keyword_style), -- async, await, yield
         ["@keyword.storage"] = { link = "StorageClass" }, -- static, const, mut, extern
-        ["@keyword.type"] = with_style({ fg = palette.light_blue }, keyword_style),
+        ["@keyword.type"] = { fg = palette.light_blue },
         ["@string.documentation"] = with_style({ fg = palette.beige }, comment_style), -- Python docstrings / JSDoc
         ["@label"] = { fg = palette.pink }, -- C/C++ goto labels, loop tags
         ["@lsp.type.parameter"] = { fg = palette.orange },
