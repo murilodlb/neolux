@@ -71,7 +71,7 @@ function M.get(palette, opts)
         ["@function"] = { link = "Function" },
         ["@function.builtin"] = with_style({ fg = palette.light_blue }, function_style), -- print(), len()
         ["@keyword"] = { link = "Keyword" },
-        ["@keyword.function"] = with_style({ fg = palette.light_blue, bold = false }, styles.keywords), -- 'def' or 'function'
+        ["@keyword.function"] = { fg = palette.light_blue }, -- 'def' or 'function'
         ["@keyword.return"] = with_style({ fg = palette.pink }, keyword_style), -- 'return'
         ["@type"] = { link = "Type" },
         ["@type.builtin"] = { fg = palette.light_blue }, -- built-in types
