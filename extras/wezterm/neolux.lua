@@ -24,11 +24,11 @@ return {
     ansi = {
         "#0c0c0c", -- black   (gray1)
         "#D90000", -- red
-        "#4fe275", -- green   (green)
+        "#2fff73", -- green   (green)
         "#ffcc00", -- yellow  (yellow)
         "#044b8b", -- blue
         "#723EC3", -- magenta (purple)
-        "#00ffff", -- cyan    (light_blue)
+        "#55efef", -- cyan    (light_blue)
         "#ffffff", -- white   (fg)
     },
 

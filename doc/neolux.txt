@@ -1,4 +1,4 @@
-*neolux.txt*   Tema de alto contraste com fundo puro (#000000) para o Neovim
+*neolux.txt*   Tema de alto contraste com fundo preto (#000000) para o Neovim
 
 ==============================================================================
 SUMÁRIO                                                      *neolux-sumario*
@@ -17,7 +17,7 @@ SUMÁRIO                                                      *neolux-sumario*
 ==============================================================================
 1. INTRODUÇÃO                                                        *neolux*
 
-O **Neolux** é um tema desenvolvido inteiramente em Lua puro para o Neovim,
+O **Neolux** é um tema desenvolvido inteiramente em Lua para o Neovim,
 baseado no Monokai, oferecendo uma experiência visual de alto contraste com
 fundo puramente preto (`#000000`) e realces vibrantes.
 
@@ -166,14 +166,14 @@ A paleta padrão pode ser inspecionada via `require("neolux").colors`:
     `fg`          `#ffffff`   Texto padrão, classes e variáveis
     `gray1`       `#0c0c0c`   Janelas flutuantes, statusline e CursorLine
     `gray2`       `#3c3c3a`   Números de linha, gutter e seleção de menu
-    `gray3`       `#57595B`   Bordas, divisórias e texto secundário
+    `gray3`       `#57595b`   Bordas, divisórias e texto secundário
     `orange`      `#f98800`   Cursor, efeito de yank e parâmetros
     `beige`       `#e6db74`   Comentários e docstrings
-    `light_blue`  `#00ffff`   Palavras reservadas (`def`, `class`), tipos
-    `green`       `#4fe275`   Nomes de funções e métodos
+    `light_blue`  `#55efef`   Palavras reservadas (`def`, `class`), tipos
+    `green`       `#2fff73`   Nomes de funções e métodos
     `pink`        `#f84285`   Controle de fluxo (`for`, `while`, `return`)
     `yellow`      `#ffcc00`   Strings, delimitadores e avisos
-    `purple`      `#8b53fe`   Constantes, números e booleanos
+    `purple`      `#723ec3`   Constantes, números e booleanos
     `blue`        `#2495ff`   Delimitadores internos e informações
     `dark_blue`   `#044b8b`   Contraste de texto em barras de status
     `tint_pink`   `#2a0a16`   Fundo sutil para erros e remoções em diff
