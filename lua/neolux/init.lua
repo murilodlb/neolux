@@ -3,6 +3,7 @@ local base_palette = require("neolux.palette")
 
 local M = {}
 
+M.version = "0.0.3"
 M.colors = vim.deepcopy(base_palette)
 
 local function register_commands()
