@@ -14,6 +14,10 @@ function M.get(palette, opts)
     local styles = opts.styles or {}
     local comment_style = vim.tbl_extend("force", { italic = opts.italic_comments ~= false }, styles.comments or {})
     local keyword_style = vim.tbl_extend("force", { bold = true }, styles.keywords or {})
+    local function_kw_style = vim.tbl_extend("force", styles.keywords or {}, {
+        bold = false,
+        -- italic = true,
+    })
     local function_style = styles.functions or {}
     local variable_style = styles.variables or {}
 
@@ -71,7 +75,7 @@ function M.get(palette, opts)
         ["@function"] = { link = "Function" },
         ["@function.builtin"] = with_style({ fg = palette.light_blue }, function_style), -- print(), len()
         ["@keyword"] = { link = "Keyword" },
-        ["@keyword.function"] = with_style({ fg = palette.light_blue, bold = false }, keyword_style), -- 'def' or 'function'
+        ["@keyword.function"] = with_style({ fg = palette.light_blue }, function_kw_style), -- 'def' or 'function'
         ["@keyword.return"] = with_style({ fg = palette.pink }, keyword_style), -- 'return'
         ["@type"] = { link = "Type" },
         ["@type.builtin"] = { fg = palette.light_blue }, -- built-in types
@@ -132,7 +136,7 @@ function M.get(palette, opts)
         ["@keyword.operator"] = { link = "Operator" }, -- e.g. 'and', 'or', 'in', 'sizeof'
         ["@keyword.coroutine"] = with_style({ fg = palette.pink }, keyword_style), -- async, await, yield
         ["@keyword.storage"] = { link = "StorageClass" }, -- static, const, mut, extern
-        ["@keyword.type"] = with_style({ fg = palette.light_blue, bold = false }, keyword_style),
+        ["@keyword.type"] = with_style({ fg = palette.light_blue }, function_kw_style),
         ["@string.documentation"] = with_style({ fg = palette.beige }, comment_style), -- Python docstrings / JSDoc
         ["@label"] = { fg = palette.pink }, -- C/C++ goto labels, loop tags
         ["@lsp.type.parameter"] = { fg = palette.orange },
