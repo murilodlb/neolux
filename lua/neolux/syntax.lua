@@ -66,12 +66,12 @@ function M.get(palette, opts)
         -- 2. TREE-SITTER GROUPS
         ["@variable"] = with_style({ fg = palette.fg }, variable_style), -- Normal variables
         ["@variable.builtin"] = { fg = palette.green }, -- 'self' or 'this'
-        ["@variable.parameter"] = { fg = palette.fg }, -- Function arguments
+        ["@variable.parameter"] = { fg = palette.orange }, -- Function arguments
         ["@variable.member"] = { fg = palette.light_blue }, -- Attributes
         ["@function"] = { link = "Function" },
         ["@function.builtin"] = with_style({ fg = palette.light_blue }, function_style), -- print(), len()
         ["@keyword"] = { link = "Keyword" },
-        ["@keyword.function"] = { fg = palette.light_blue }, -- 'def' or 'function'
+        ["@keyword.function"] = with_style({ fg = palette.light_blue, bold = false }, keyword_style), -- 'def' or 'function'
         ["@keyword.return"] = with_style({ fg = palette.pink }, keyword_style), -- 'return'
         ["@type"] = { link = "Type" },
         ["@type.builtin"] = { fg = palette.light_blue }, -- built-in types
@@ -99,7 +99,6 @@ function M.get(palette, opts)
         ["@lsp.type.class"] = { link = "Type" },
         ["@lsp.type.property"] = { link = "@variable.member" },
         ["@lsp.type.namespace"] = { link = "@module" },
-        ["@lsp.mod.declaration.parameter"] = { fg = palette.orange },
         ["@lsp.typemod.method.defaultLibrary"] = { link = "Function" },
         ["@lsp.typemod.function.defaultLibrary"] = { link = "Function" },
         ["@attribute"] = { fg = palette.blue }, -- The 'dataclass' word
@@ -133,7 +132,7 @@ function M.get(palette, opts)
         ["@keyword.operator"] = { link = "Operator" }, -- e.g. 'and', 'or', 'in', 'sizeof'
         ["@keyword.coroutine"] = with_style({ fg = palette.pink }, keyword_style), -- async, await, yield
         ["@keyword.storage"] = { link = "StorageClass" }, -- static, const, mut, extern
-        ["@keyword.type"] = { fg = palette.light_blue },
+        ["@keyword.type"] = with_style({ fg = palette.light_blue, bold = false }, keyword_style),
         ["@string.documentation"] = with_style({ fg = palette.beige }, comment_style), -- Python docstrings / JSDoc
         ["@label"] = { fg = palette.pink }, -- C/C++ goto labels, loop tags
         ["@lsp.type.parameter"] = { fg = palette.orange },
@@ -149,14 +148,14 @@ function M.get(palette, opts)
         ["@lsp.type.bracket"] = { link = "@punctuation.bracket" },
 
         -- 4. MARKDOWN STRUCTURE
-        ["@markup.heading.1.markdown"] = { fg = palette.pink, bold = true },
-        ["@markup.heading.2.markdown"] = { fg = palette.orange, bold = true },
-        ["@markup.heading.3.markdown"] = { fg = palette.yellow, bold = true },
-        ["@markup.heading.4.markdown"] = { fg = palette.green, bold = true },
-        ["@markup.heading.5.markdown"] = { fg = palette.light_blue, bold = true },
-        ["@markup.heading.6.markdown"] = { fg = palette.purple, bold = true },
-        ["@markup.link.url.markdown"] = { fg = palette.blue, underline = true },
-        ["@markup.link.label.markdown"] = { fg = palette.green },
+        ["@markup.heading.1"] = { fg = palette.pink, bold = true },
+        ["@markup.heading.2"] = { fg = palette.orange, bold = true },
+        ["@markup.heading.3"] = { fg = palette.yellow, bold = true },
+        ["@markup.heading.4"] = { fg = palette.green, bold = true },
+        ["@markup.heading.5"] = { fg = palette.light_blue, bold = true },
+        ["@markup.heading.6"] = { fg = palette.purple, bold = true },
+        ["@markup.link.url"] = { fg = palette.blue, underline = true },
+        ["@markup.link.label"] = { fg = palette.green },
         ["@markup.raw"] = { fg = palette.orange }, -- Inline code blocks `code`
         ["@markup.raw.block"] = { fg = palette.fg }, -- Fenced code blocks ```
         ["@markup.list"] = { fg = palette.pink }, -- Markdown bullets (- / *)

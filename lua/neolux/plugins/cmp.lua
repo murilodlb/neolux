@@ -4,8 +4,8 @@ function M.get(palette)
     return {
         CmpItemAbbr = { fg = palette.fg },
         CmpItemAbbrDeprecated = { fg = palette.gray3, strikethrough = true },
-        CmpItemAbbrMatch = { fg = palette.orange, bold = true },
-        CmpItemAbbrMatchFuzzy = { fg = palette.orange, bold = true },
+        CmpItemAbbrMatch = { fg = palette.green, bold = true },
+        CmpItemAbbrMatchFuzzy = { fg = palette.green, bold = true },
         CmpItemMenu = { fg = palette.gray3 },
 
         CmpItemKindDefault = { fg = palette.light_blue },

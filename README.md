@@ -4,7 +4,7 @@
 <br>
 <br>
 
-Um tema desenvolvido inteiramente em Lua puro para o Neovim, baseado no Monokai, oferecendo uma experiência visual de alto contraste com fundo puramente preto (`#000000`) e realces vibrantes. Esse tema só não é mais escuro porque não tem como usar hex code negativo.
+Um tema baseado no Monokai, de alto contraste com fundo puramente preto (`#000000`) e realces vibrantes. Esse tema só não é mais escuro porque não tem como usar hex code negativo.
 
 ![Neolux Screenshot](media/screenshot.png)
 

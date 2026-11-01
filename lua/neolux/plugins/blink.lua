@@ -9,7 +9,7 @@ function M.get(palette)
         BlinkCmpScrollBarGutter = { bg = palette.gray1 },
         BlinkCmpLabel = { fg = palette.fg },
         BlinkCmpLabelDeprecated = { fg = palette.gray3, strikethrough = true },
-        BlinkCmpLabelMatch = { fg = palette.orange, bold = true },
+        BlinkCmpLabelMatch = { fg = palette.green, bold = true },
         BlinkCmpLabelDetail = { fg = palette.gray3 },
         BlinkCmpLabelDescription = { fg = palette.gray3 },
         BlinkCmpDoc = { fg = palette.fg, bg = palette.gray1 },

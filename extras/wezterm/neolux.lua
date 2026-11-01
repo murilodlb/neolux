@@ -23,11 +23,11 @@ return {
     -- Standard ANSI Colors (The base 8 colors)
     ansi = {
         "#0c0c0c", -- black   (gray1)
-        "#D90000", -- red
+        "#c5003c", -- red
         "#2fff73", -- green   (green)
         "#ffcc00", -- yellow  (yellow)
         "#044b8b", -- blue
-        "#723EC3", -- magenta (purple)
+        "#723ec3", -- magenta (purple)
         "#55efef", -- cyan    (light_blue)
         "#ffffff", -- white   (fg)
     },
@@ -36,12 +36,12 @@ return {
     brights = {
         "#3c3c3a", -- bright black   (gray2)
         "#f84285", -- bright red     (pink)
-        "#08CB00", -- bright green   (green)
-        "#e6db74", -- bright yellow  (beige - distinct from standard yellow)
+        "#5cd85a", -- bright green   (green)
+        "#f3e600", -- bright yellow  (beige - distinct from standard yellow)
         "#2495ff", -- bright blue    (blue)
         "#8b53fe", -- bright magenta (purple)
-        "#92EEFF", -- bright cyan    (light_blue)
-        "#ffffff", -- bright white   (fg)
+        "#88dddd", -- bright cyan    (light_blue)
+        "#f5f1e8", -- bright white   (fg)
     },
 
     -- Tab Bar

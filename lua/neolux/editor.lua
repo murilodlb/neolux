@@ -33,6 +33,8 @@ function M.get(palette, opts)
         LspReferenceText = { reverse = true },
         LspReferenceRead = { reverse = true },
         LspReferenceWrite = { reverse = true },
+        LspInlayHint = { fg = palette.gray3, bg = palette.gray1 },
+        LspSignatureActiveParameter = { fg = palette.orange, bold = true, underline = true },
 
         -- 4. Window Splits, Gutter & Status Lines
         SignColumn = { fg = palette.gray3, bg = bg },
@@ -80,6 +82,8 @@ function M.get(palette, opts)
         DiagnosticInfo = { fg = palette.light_blue },
         DiagnosticHint = { fg = palette.beige },
         DiagnosticOk = { fg = palette.green },
+        DiagnosticDeprecated = { fg = palette.gray3, strikethrough = true },
+        DiagnosticUnnecessary = { fg = palette.gray3 },
 
         DiagnosticSignError = { fg = palette.pink, bg = bg },
         DiagnosticSignWarn = { fg = palette.yellow, bg = bg },
