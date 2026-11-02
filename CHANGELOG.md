@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2026-11-01
+
+### Added
+- **Ghostty Theme Extras (`extras/ghostty/`)**: Added official Ghostty colorscheme configuration files (`neolux` extensionless and `neolux.conf`) supporting the 16-color ANSI/Brights palette, `#000000` background, `#f98800` cursor, and `#57595b` split dividers.
+- **Kitty Theme Extras (`extras/kitty/`)**: Added official Kitty theme (`neolux.conf`) supporting `color0`–`color15`, window borders, tab bar styling, and URL underline highlights.
+- **Modern LSP Highlight Groups (`lua/neolux/editor.lua`)**: Added `LspInlayHint` for Neovim 0.10+ native inline hints, `LspSignatureActiveParameter` for parameter highlights in signature help popups, `DiagnosticDeprecated` for strikethrough deprecated APIs, and `DiagnosticUnnecessary` for dimmed unused imports/variables.
+
+### Changed
+- **Parameter Highlighting (`lua/neolux/syntax.lua`)**: Aligned `@variable.parameter` to `palette.orange` so function parameter definitions consistently match LSP parameter highlights, while general variables (`@variable`, `@lsp.type.variable`) remain clean white (`palette.fg`).
+- **Autocomplete Match Colors (`cmp.lua`, `blink.lua`)**: Updated `CmpItemAbbrMatch`, `CmpItemAbbrMatchFuzzy`, and `BlinkCmpLabelMatch` to `palette.green`, standardizing with Neovim's native `PmenuMatch`.
+- **WezTerm Palette Sync (`extras/wezterm/`)**: Synchronized 16-color ANSI and Brights palettes across `neolux.lua` and `neolux.toml`.
+
+### Fixed
+- **Tree-sitter Markdown Headings & Links (`lua/neolux/syntax.lua`)**: Fixed capture group names from `@markup.heading.*.markdown` to standard `@markup.heading.1` through `@markup.heading.6` (and `@markup.link.url`/`label`), restoring distinct multi-colored heading levels in Markdown documents.
+- **Keyword Weights & Customization (`lua/neolux/syntax.lua`)**: `@keyword.function` and `@keyword.type` now default to `bold = false` while properly inheriting user customizations via `styles.keywords = { italic = true }`.
+- **Invalid LSP Semantic Group (`lua/neolux/syntax.lua`)**: Removed malformed `@lsp.mod.declaration.parameter` group.
+
 ## [0.0.3] - 2026-10-24
 
 ### Added
