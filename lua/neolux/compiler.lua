@@ -19,7 +19,7 @@ end
 function M.hash_string(str, force_pure_lua)
     local len = #str
     if ok_bit and not force_pure_lua then
-        local tobit, bxor, rol, tohex = bit.tobit, bit.bxor, bit.rol, bit.tohex
+        local tobit, bxor, rol, rshift, tohex = bit.tobit, bit.bxor, bit.rol, bit.rshift, bit.tohex
         local h1 = tobit(0x811c9dc5)
         local h2 = tobit(0x9e3779b9)
         for i = 1, len do
@@ -27,8 +27,12 @@ function M.hash_string(str, force_pure_lua)
             h1 = tobit(rol(bxor(h1, b), 5) - h1 + b)
             h2 = tobit(rol(bxor(h2, b + i), 7) + h2)
         end
-        h1 = bxor(h1, rol(h1, 16))
-        h2 = bxor(h2, rol(h2, 13))
+        h1 = bxor(h1, rshift(h1, 16))
+        h1 = tobit(rol(h1, 11) + h1)
+        h1 = bxor(h1, rshift(h1, 13))
+        h2 = bxor(h2, rshift(h2, 16))
+        h2 = tobit(rol(h2, 13) + h2)
+        h2 = bxor(h2, rshift(h2, 15))
         return tohex(h1) .. tohex(h2)
     end
 

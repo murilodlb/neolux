@@ -307,12 +307,17 @@ test("compiler.hash returns 16-char hex without loading vim.inspect", function()
     assert_eq(package.loaded["vim.inspect"], nil, "compiler.hash must not load vim.inspect")
 end)
 
-test("compiler.hash_string handles NUL bytes in both bit and pure-Lua paths", function()
+test("compiler.hash_string handles NUL bytes and preserves 64-bit entropy", function()
     assert(type(compiler.hash_string) == "function", "compiler.hash_string missing")
     local b1 = compiler.hash_string("abc\0def")
     local b2 = compiler.hash_string("abc\0xyz")
+    local b_empty = compiler.hash_string("")
+    local b_opt = compiler.hash_string("transparent=true")
     assert(#b1 == 16 and b1:match("^[0-9a-f]+$"), "bit hash format")
     assert(b1 ~= b2, "bit hash must not truncate at NUL byte")
+    assert(b1:sub(1, 4) ~= b1:sub(5, 8), "h1 halves must not collapse on NUL input: " .. b1)
+    assert(b_empty:sub(1, 4) ~= b_empty:sub(5, 8), "h1 halves must not collapse on empty input: " .. b_empty)
+    assert(b_opt:sub(1, 4) ~= b_opt:sub(5, 8), "h1 halves must not collapse on option input: " .. b_opt)
 
     local p1 = compiler.hash_string("abc\0def", true)
     local p2 = compiler.hash_string("abc\0xyz", true)
@@ -358,9 +363,19 @@ test("get_source_fingerprint detects added, modified, and deleted lua files", fu
     local fp2 = compiler.get_source_fingerprint(dir)
     assert(fp2 ~= fp1, "adding sub/c.lua must change fingerprint")
 
-    uv.fs_utime(dir .. "/a.lua", 1800000100, 1800000100.123)
+    local st_a = assert(uv.fs_stat(dir .. "/a.lua"))
+    local next_sec = st_a.mtime.sec + 10
+    uv.fs_utime(dir .. "/a.lua", next_sec, next_sec)
     local fp3 = compiler.get_source_fingerprint(dir)
-    assert(fp3 ~= fp2, "modifying mtime of a.lua must change fingerprint")
+    assert(fp3 ~= fp2, "modifying mtime sec of a.lua must change fingerprint")
+
+    uv.fs_utime(dir .. "/a.lua", next_sec, next_sec + 0.5)
+    local st_a_sub = assert(uv.fs_stat(dir .. "/a.lua"))
+    if st_a_sub.mtime.nsec > 0 then
+        local fp3_sub = compiler.get_source_fingerprint(dir)
+        assert(fp3_sub ~= fp3, "modifying sub-second nsec of a.lua must change fingerprint")
+        fp3 = fp3_sub
+    end
 
     uv.fs_unlink(dir .. "/sub/c.lua")
     local fp4 = compiler.get_source_fingerprint(dir)
