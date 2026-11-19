@@ -43,6 +43,13 @@ jobs:
             -c "lua assert(vim.g.colors_name == 'neolux', 'neolux failed to load')" \
             -c "qall!"
 
+      - name: Run headless regression test suite
+        run: |
+          nvim --clean --headless \
+            --cmd "set rtp^=." \
+            -c "lua dofile('tests/run.lua')" \
+            -c "qa!"
+
       - name: Run checkhealth and help tags verification
         run: |
           nvim --headless -u NONE \

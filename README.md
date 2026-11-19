@@ -133,16 +133,16 @@ require("lualine").setup({
 Para garantir um tempo de inicialização ultrarrápido, o **Neolux** conta com um sistema nativo de compilação para **bytecode LuaJIT** (inspirado no *Catppuccin*).
 
 ### Como funciona?
-Na primeira vez em que o tema é carregado, o Neolux resolve todas as cores da paleta, grupos do editor, árvores sintáticas (Treesitter/LSP), integrações de plugins e customizações do usuário, compilando todas as chamadas `nvim_set_hl` em um único arquivo binário otimizado (`compiled.luac`) salvo no diretório de cache do Neovim (`stdpath("cache") .. "/neolux"`).
+Na primeira vez em que o tema é carregado, o Neolux resolve todas as cores da paleta, grupos do editor, árvores sintáticas (Treesitter/LSP), integrações de plugins e customizações do usuário, convertendo cores hexadecimais em inteiros RGB de 24 bits, deduplicando tabelas repetidas e compilando todas as chamadas `nvim_set_hl` em um único arquivo binário otimizado (`compiled.luac`) salvo atomicamente no diretório de cache do Neovim (`stdpath("cache") .. "/neolux"`).
 
-Nas inicializações seguintes, o Neolux carrega diretamente esse bytecode pré-compilado — sem precisar carregar os módulos internos (`editor`, `syntax`, `plugins/*`) ou mesclar tabelas em tempo de execução, reduzindo o tempo de carregamento em **mais de 55%**.
+Nas inicializações seguintes, o Neolux carrega diretamente esse bytecode pré-compilado — sem precisar carregar os módulos internos (`editor`, `syntax`, `plugins/*`) ou mesclar tabelas em tempo de execução.
 
 ### Invalidação Automática
-Você **não** precisa recompilar manualmente quando alterar sua configuração. O Neolux gera automaticamente uma assinatura **SHA-256** baseada em:
+Você **não** precisa recompilar manualmente quando alterar sua configuração. O Neolux gera automaticamente um **hash de 64 bits em LuaJIT** (sem passar pela ponte Vimscript) baseado em:
 - Suas opções definidas em `require("neolux").setup({...})`;
 - O bytecode das funções de callback `on_colors` e `on_highlights`;
-- A lista de plugins instalados no `lazy.nvim`;
-- A data de modificação (`mtime`) dos arquivos-fonte do tema.
+- A lista de plugins suportados instalados no `lazy.nvim`;
+- A data de modificação (`mtime`) dos arquivos `.lua` dentro de `lua/neolux/`.
 
 Qualquer alteração em um desses fatores invalida o cache e recompila o tema automaticamente na próxima inicialização.
 
