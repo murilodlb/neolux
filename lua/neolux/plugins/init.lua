@@ -1,51 +1,29 @@
+local config = require("neolux.config")
+
 local M = {}
 
--- Map lazy.nvim plugin repository names to neolux plugin modules
-M.plugins = {
-    ["neo-tree.nvim"] = "neo-tree",
-    ["lazy.nvim"] = "lazy",
-    ["mason.nvim"] = "mason",
-    ["telescope.nvim"] = "telescope",
-    ["nvim-cmp"] = "cmp",
-    ["blink.cmp"] = "blink",
-    ["gitsigns.nvim"] = "gitsigns",
-    ["indent-blankline.nvim"] = "indent-blankline",
-    ["mini.indentscope"] = "indent-blankline",
-    ["mini.nvim"] = "indent-blankline",
-    ["bufferline.nvim"] = "bufferline",
-    ["rainbow-delimiters.nvim"] = "rainbow-delimiters",
-}
-
--- All unique module names in lua/neolux/plugins/
-M.modules = {
-    "neo-tree",
-    "lazy",
-    "mason",
-    "telescope",
-    "cmp",
-    "blink",
-    "gitsigns",
-    "indent-blankline",
-    "bufferline",
-    "rainbow-delimiters",
-}
+M.plugins = config.plugin_map
+M.modules = config.plugin_modules
 
 function M.get(palette, opts)
-    opts = opts or require("neolux.config").options
+    opts = opts or config.options
     local plugin_opts = opts.plugins or { auto = true }
     local enabled = {}
 
     local has_lazy = package.loaded.lazy ~= nil
-    local lazy_plugins = has_lazy and require("lazy.core.config").plugins or nil
 
     if plugin_opts.all or (plugin_opts.auto and not has_lazy) then
         for _, mod in ipairs(M.modules) do
             enabled[mod] = true
         end
-    elseif plugin_opts.auto and lazy_plugins then
-        for repo, mod in pairs(M.plugins) do
-            if lazy_plugins[repo] then
-                enabled[mod] = true
+    elseif plugin_opts.auto and has_lazy then
+        local ok, lazy_cfg = pcall(require, "lazy.core.config")
+        local lazy_plugins = ok and lazy_cfg and lazy_cfg.plugins or nil
+        if lazy_plugins then
+            for repo, mod in pairs(M.plugins) do
+                if lazy_plugins[repo] then
+                    enabled[mod] = true
+                end
             end
         end
     end
@@ -76,7 +54,7 @@ end
 
 function M.setup(palette, opts)
     palette = palette or require("neolux.palette")
-    opts = opts or require("neolux.config").options
+    opts = opts or config.options
     local groups = M.get(palette, opts)
     for group, settings in pairs(groups) do
         vim.api.nvim_set_hl(0, group, settings)

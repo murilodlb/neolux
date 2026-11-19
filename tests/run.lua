@@ -228,6 +228,74 @@ test("health check runs without error", function()
     require("neolux.health").check()
 end)
 
+test("config exposes terminal_colors and plugin registries", function()
+    local palette = require("neolux.palette")
+    assert(type(config.terminal_colors) == "table", "config.terminal_colors missing")
+    assert_eq(#config.terminal_colors, 16, "terminal_colors length")
+    for i, key in ipairs(config.terminal_colors) do
+        assert(palette[key] ~= nil, "invalid palette key at terminal_colors[" .. i .. "]: " .. tostring(key))
+    end
+
+    assert(type(config.plugin_map) == "table", "config.plugin_map missing")
+    assert(type(config.plugin_repos) == "table", "config.plugin_repos missing")
+    assert(type(config.plugin_modules) == "table", "config.plugin_modules missing")
+
+    local map_keys = {}
+    for k in pairs(config.plugin_map) do
+        table.insert(map_keys, k)
+    end
+    table.sort(map_keys)
+    assert(#config.plugin_repos == #map_keys, "plugin_repos count matches plugin_map")
+    for i, repo in ipairs(config.plugin_repos) do
+        assert_eq(repo, map_keys[i], "plugin_repos sorted at index " .. i)
+    end
+
+    local plugins = require("neolux.plugins")
+    assert(plugins.plugins == config.plugin_map, "plugins.plugins shares config.plugin_map")
+    assert(plugins.modules == config.plugin_modules, "plugins.modules shares config.plugin_modules")
+end)
+
+test("resolve_colors returns fresh copy without mutating base palette", function()
+    local palette = require("neolux.palette")
+    assert(type(neolux.resolve_colors) == "function", "neolux.resolve_colors missing")
+    local orig_bg = palette.bg
+    local resolved = neolux.resolve_colors({
+        on_colors = function(c)
+            c.bg = "#121212"
+        end,
+    })
+    assert_eq(resolved.bg, "#121212", "resolved bg overridden")
+    assert_eq(palette.bg, orig_bg, "base palette must not be mutated")
+end)
+
+test("plugins.get skips lazy.core.config when auto is false", function()
+    package.loaded["lazy"] = true
+    package.loaded["lazy.core.config"] = nil
+    local palette = require("neolux.palette")
+    local hl = require("neolux.plugins").get(palette, { plugins = { auto = false, telescope = true } })
+    assert(hl.TelescopeNormal ~= nil, "TelescopeNormal should load with auto=false, telescope=true")
+end)
+
+test("syntax.get preserves style behavior for empty and non-empty styles", function()
+    local palette = require("neolux.palette")
+    local syntax = require("neolux.syntax")
+    local hl_default = syntax.get(palette, config.options)
+    assert_eq(hl_default["@variable"].fg, palette.fg, "@variable default fg")
+    assert_eq(hl_default["Function"].fg, palette.green, "Function default fg")
+
+    local hl_italic = syntax.get(palette, {
+        italic_comments = true,
+        styles = {
+            keywords = { italic = true },
+            functions = {},
+            variables = {},
+        },
+    })
+    assert_eq(hl_italic["Keyword"].italic, true, "Keyword italic when configured")
+    assert_eq(hl_italic["@keyword.function"].italic, true, "@keyword.function inherits italic")
+    assert(hl_italic["@keyword.function"].bold ~= true, "@keyword.function stays non-bold")
+end)
+
 rm_rf(tmp_root)
 set_cache_dir(orig_cache_dir)
 compiler.compiled_path = orig_compiled_path

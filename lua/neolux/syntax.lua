@@ -1,7 +1,7 @@
 local M = {}
 
 local function with_style(base, style)
-    if type(style) == "table" then
+    if type(style) == "table" and next(style) ~= nil then
         return vim.tbl_extend("force", base, style)
     end
     return base

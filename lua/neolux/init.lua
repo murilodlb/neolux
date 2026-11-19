@@ -4,7 +4,26 @@ local base_palette = require("neolux.palette")
 local M = {}
 
 M.version = "0.0.4"
-M.colors = vim.deepcopy(base_palette)
+
+local function copy_palette(src)
+    local dst = {}
+    for k, v in pairs(src) do
+        dst[k] = v
+    end
+    return dst
+end
+
+M.colors = copy_palette(base_palette)
+
+function M.resolve_colors(opts)
+    opts = opts or config.options
+    local colors = copy_palette(base_palette)
+    local on_colors = opts.on_colors
+    if type(on_colors) == "function" and on_colors ~= config.defaults.on_colors then
+        on_colors(colors)
+    end
+    return colors
+end
 
 local function register_commands()
     if M._commands_registered then
@@ -25,20 +44,13 @@ end
 
 function M.setup(opts)
     config.setup(opts)
-    local colors = vim.deepcopy(base_palette)
-    if type(config.options.on_colors) == "function" then
-        config.options.on_colors(colors)
-    end
-    M.colors = colors
+    M.colors = M.resolve_colors(config.options)
     register_commands()
 end
 
 function M.compile()
     local opts = config.options
-    local colors = vim.deepcopy(base_palette)
-    if type(opts.on_colors) == "function" then
-        opts.on_colors(colors)
-    end
+    local colors = M.resolve_colors(opts)
     M.colors = colors
     return require("neolux.compiler").compile(opts, colors)
 end
@@ -51,10 +63,7 @@ function M.load()
     register_commands()
 
     local opts = config.options
-    local colors = vim.deepcopy(base_palette)
-    if type(opts.on_colors) == "function" then
-        opts.on_colors(colors)
-    end
+    local colors = M.resolve_colors(opts)
     M.colors = colors
 
     if opts.cache ~= false then
@@ -63,7 +72,7 @@ function M.load()
     end
 
     vim.cmd("hi clear")
-    if vim.fn.exists("syntax_on") == 1 then
+    if vim.g.syntax_on then
         vim.cmd("syntax reset")
     end
 
@@ -76,24 +85,9 @@ function M.load()
         vim.api.nvim_set_hl(0, group, settings)
     end
 
-    -- Terminal 16 Colors (ANSI Standard & Bright)
-    vim.g.terminal_color_0 = colors.bg -- Black
-    vim.g.terminal_color_1 = colors.pink -- Red
-    vim.g.terminal_color_2 = colors.green -- Green
-    vim.g.terminal_color_3 = colors.yellow -- Yellow
-    vim.g.terminal_color_4 = colors.blue -- Blue
-    vim.g.terminal_color_5 = colors.purple -- Magenta
-    vim.g.terminal_color_6 = colors.light_blue -- Cyan
-    vim.g.terminal_color_7 = colors.fg -- White
-
-    vim.g.terminal_color_8 = colors.gray3 -- Bright Black (Dark Gray)
-    vim.g.terminal_color_9 = colors.pink -- Bright Red
-    vim.g.terminal_color_10 = colors.green -- Bright Green
-    vim.g.terminal_color_11 = colors.yellow -- Bright Yellow
-    vim.g.terminal_color_12 = colors.light_blue -- Bright Blue
-    vim.g.terminal_color_13 = colors.purple -- Bright Magenta
-    vim.g.terminal_color_14 = colors.light_blue -- Bright Cyan
-    vim.g.terminal_color_15 = colors.fg -- Bright White
+    for i = 1, #config.terminal_colors do
+        vim.g["terminal_color_" .. (i - 1)] = colors[config.terminal_colors[i]]
+    end
 end
 
 return M
