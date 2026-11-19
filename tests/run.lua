@@ -532,6 +532,127 @@ test("pixel-for-pixel highlight parity between uncached and warm cache", functio
     end
 end)
 
+test("all 22 plugin modules load non-empty tables with valid link targets", function()
+    assert_eq(#config.plugin_modules, 22, "expected 22 plugin modules")
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    for _, mod_name in ipairs(config.plugin_modules) do
+        local ok, mod = pcall(require, "neolux.plugins." .. mod_name)
+        assert_eq(ok, true, "require plugin module: " .. mod_name)
+        local hls = mod.get(neolux.colors, config.options)
+        assert(type(hls) == "table" and next(hls) ~= nil, "non-empty highlights for: " .. mod_name)
+
+        for group, spec in pairs(hls) do
+            if type(spec) == "table" and spec.link then
+                local resolved = vim.api.nvim_get_hl(0, { name = spec.link, link = false })
+                assert(
+                    next(resolved) ~= nil,
+                    string.format("dangling link %s -> %s in %s", group, spec.link, mod_name)
+                )
+            end
+        end
+    end
+end)
+
+test("representative highlight groups for all 12 new plugins", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    local cases = {
+        { name = "SnacksPickerMatch", fg = 0x2fff73, bold = true },
+        { name = "WhichKeyTitle", fg = 0xf98800, bold = true },
+        { name = "NoiceCmdlinePopupBorder", fg = 0xf98800 },
+        { name = "FlashLabel", fg = 0x000000, bg = 0xf84285, bold = true },
+        { name = "TroubleCount", fg = 0xf84285, bold = true },
+        { name = "RenderMarkdownH1Bg", bg = 0x2a0a16 },
+        { name = "FzfLuaFzfMatch", fg = 0x2fff73, bold = true },
+        { name = "TodoBgTODO", fg = 0x000000, bg = 0x55efef, bold = true },
+        { name = "NvimTreeRootFolder", fg = 0xf98800, bold = true },
+        { name = "MiniFilesNormal", fg = 0xffffff, bg = 0x0c0c0c },
+        { name = "MiniIndentscopeSymbol", fg = 0x3c3c3a },
+        { name = "DiffviewFilePanelTitle", fg = 0xf98800, bold = true },
+        { name = "NotifyBackground", bg = 0x000000 },
+    }
+
+    for _, expected in ipairs(cases) do
+        local hl = vim.api.nvim_get_hl(0, { name = expected.name, link = false })
+        if expected.fg ~= nil then
+            assert_eq(hl.fg, expected.fg, expected.name .. ".fg")
+        end
+        if expected.bg ~= nil then
+            assert_eq(hl.bg, expected.bg, expected.name .. ".bg")
+        end
+        if expected.bold ~= nil then
+            assert_eq(hl.bold, expected.bold, expected.name .. ".bold")
+        end
+    end
+end)
+
+test("lazy.nvim auto-detection on new plugins including standalone mini.files", function()
+    local orig_lazy = package.loaded["lazy"]
+    local orig_lazy_cfg = package.loaded["lazy.core.config"]
+
+    package.loaded["lazy"] = {
+        plugins = function()
+            return {
+                { name = "mini.files" },
+                { name = "flash.nvim" },
+            }
+        end,
+    }
+    package.loaded["lazy.core.config"] = {
+        plugins = {
+            ["mini.files"] = {},
+            ["flash.nvim"] = {},
+        },
+    }
+
+    local ok, err = pcall(function()
+        neolux.setup({ cache = false, plugins = { auto = true } })
+        vim.cmd("colorscheme neolux")
+
+        local mini_hl = vim.api.nvim_get_hl(0, { name = "MiniFilesNormal", link = false })
+        local flash_hl = vim.api.nvim_get_hl(0, { name = "FlashLabel", link = false })
+        local snacks_hl = vim.api.nvim_get_hl(0, { name = "SnacksPickerMatch", link = false })
+
+        assert_eq(mini_hl.fg, 0xffffff, "mini.files detected via mini module")
+        assert_eq(flash_hl.bg, 0xf84285, "flash.nvim detected via flash module")
+        assert(next(snacks_hl) == nil, "uninstalled snacks.nvim skipped when lazy active")
+    end)
+
+    package.loaded["lazy"] = orig_lazy
+    package.loaded["lazy.core.config"] = orig_lazy_cfg
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+    assert(ok, err)
+end)
+
+test("transparent mode clears bg on sidebars/signs/dashboard while preserving NotifyBackground", function()
+    neolux.setup({ transparent = true, cache = false })
+    vim.cmd("colorscheme neolux")
+
+    local cleared = {
+        "TroubleNormal",
+        "NvimTreeNormal",
+        "DiffviewNormal",
+        "MiniDiffSignAdd",
+        "TodoSignTODO",
+        "SnacksDashboardNormal",
+    }
+    for _, name in ipairs(cleared) do
+        local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+        assert(next(hl) ~= nil, name .. " should be defined in transparent mode")
+        assert_eq(hl.bg, nil, name .. ".bg should be cleared in transparent mode")
+    end
+
+    local notify_bg = vim.api.nvim_get_hl(0, { name = "NotifyBackground", link = false })
+    assert_eq(notify_bg.bg, 0x000000, "NotifyBackground.bg preserved in transparent mode")
+
+    neolux.setup({ transparent = false, cache = false })
+    vim.cmd("colorscheme neolux")
+end)
+
 rm_rf(tmp_root)
 set_cache_dir(orig_cache_dir)
 compiler.compiled_path = orig_compiled_path

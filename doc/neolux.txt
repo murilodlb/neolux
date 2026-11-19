@@ -191,15 +191,27 @@ Tokens e os seguintes plugins:
 
 - `blink.cmp` (`blink`)
 - `bufferline.nvim` (`bufferline`)
+- `diffview.nvim` (`diffview`)
+- `flash.nvim` (`flash`)
+- `fzf-lua` (`fzf-lua`)
 - `gitsigns.nvim` (`gitsigns`)
-- `indent-blankline.nvim` / `mini.indentscope` (`indent-blankline`)
+- `indent-blankline.nvim` (`indent-blankline`)
 - `lazy.nvim` (`lazy`)
 - `lualine.nvim` (via tema `neolux`)
 - `mason.nvim` (`mason`)
+- `mini.nvim` / `mini.*` (`mini`)
 - `neo-tree.nvim` (`neo-tree`)
+- `noice.nvim` (`noice`)
 - `nvim-cmp` (`cmp`)
+- `nvim-notify` (`notify`)
+- `nvim-tree.lua` (`nvim-tree`)
 - `rainbow-delimiters.nvim` (`rainbow-delimiters`)
+- `render-markdown.nvim` (`render-markdown`)
+- `snacks.nvim` (`snacks`)
 - `telescope.nvim` (`telescope`)
+- `todo-comments.nvim` (`todo-comments`)
+- `trouble.nvim` (`trouble`)
+- `which-key.nvim` (`which-key`)
 
 ==============================================================================
 7. LUALINE                                                   *neolux-lualine*
