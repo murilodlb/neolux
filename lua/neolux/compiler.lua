@@ -1,84 +1,160 @@
+local config = require("neolux.config")
+
 local M = {}
 
+M.CACHE_FORMAT_VERSION = 2
 M.cache_dir = vim.fn.stdpath("cache") .. "/neolux"
 M.compiled_path = M.cache_dir .. "/compiled.luac"
 M.state_path = M.cache_dir .. "/state.txt"
 
-local function get_source_mtime()
-    local src = debug.getinfo(1, "S").source:sub(2)
-    local dir = vim.fn.fnamemodify(src, ":h")
-    local max_mtime = 0
+local SOURCE_DIR = debug.getinfo(1, "S").source:sub(2):match("^(.*)[/\\]") or "."
+local ok_bit, bit = pcall(require, "bit")
+local str_byte = string.byte
+local str_format = string.format
 
-    local files = {
-        dir .. "/init.lua",
-        dir .. "/config.lua",
-        dir .. "/palette.lua",
-        dir .. "/editor.lua",
-        dir .. "/syntax.lua",
-        dir .. "/compiler.lua",
-        dir .. "/plugins/init.lua",
-        dir .. "/plugins/neo-tree.lua",
-        dir .. "/plugins/lazy.lua",
-        dir .. "/plugins/mason.lua",
-        dir .. "/plugins/telescope.lua",
-        dir .. "/plugins/cmp.lua",
-        dir .. "/plugins/blink.lua",
-        dir .. "/plugins/gitsigns.lua",
-        dir .. "/plugins/indent-blankline.lua",
-        dir .. "/plugins/bufferline.lua",
-        dir .. "/plugins/rainbow-delimiters.lua",
-    }
-
-    for _, file in ipairs(files) do
-        local stat = vim.uv.fs_stat(file)
-        if stat and stat.mtime and stat.mtime.sec > max_mtime then
-            max_mtime = stat.mtime.sec
-        end
-    end
-
-    return tostring(max_mtime)
+local function get_uv()
+    return vim.uv or vim.loop
 end
 
-local function dump_fn(fn)
-    if type(fn) == "function" then
-        local ok, dumped = pcall(string.dump, fn, true)
-        if ok then
-            return dumped
+function M.hash_string(str, force_pure_lua)
+    local len = #str
+    if ok_bit and not force_pure_lua then
+        local tobit, bxor, rol, tohex = bit.tobit, bit.bxor, bit.rol, bit.tohex
+        local h1 = tobit(0x811c9dc5)
+        local h2 = tobit(0x9e3779b9)
+        for i = 1, len do
+            local b = str_byte(str, i)
+            h1 = tobit(rol(bxor(h1, b), 5) - h1 + b)
+            h2 = tobit(rol(bxor(h2, b + i), 7) + h2)
+        end
+        h1 = bxor(h1, rol(h1, 16))
+        h2 = bxor(h2, rol(h2, 13))
+        return tohex(h1) .. tohex(h2)
+    end
+
+    local h1 = 2166136261
+    local h2 = 2654435761
+    for i = 1, len do
+        local b = str_byte(str, i)
+        h1 = (h1 * 33 + b + 1) % 4294967296
+        h2 = (h2 * 131 + b + i) % 4294967296
+    end
+    return str_format("%08x%08x", h1, h2)
+end
+
+local function serialize_for_hash(value, out)
+    local t = type(value)
+    if t == "table" then
+        out[#out + 1] = "{"
+        local keys = {}
+        for k in pairs(value) do
+            keys[#keys + 1] = k
+        end
+        table.sort(keys, function(a, b)
+            local ta, tb = type(a), type(b)
+            if ta ~= tb then
+                return ta < tb
+            end
+            return tostring(a) < tostring(b)
+        end)
+        for i = 1, #keys do
+            local k = keys[i]
+            serialize_for_hash(k, out)
+            out[#out + 1] = "="
+            serialize_for_hash(value[k], out)
+            out[#out + 1] = ";"
+        end
+        out[#out + 1] = "}"
+    elseif t == "function" then
+        local ok, dumped = pcall(string.dump, value, true)
+        out[#out + 1] = "f:" .. (ok and (#dumped .. ":" .. dumped) or tostring(value))
+    elseif t == "string" then
+        out[#out + 1] = "s:" .. #value .. ":" .. value
+    else
+        out[#out + 1] = t:sub(1, 1) .. ":" .. tostring(value)
+    end
+end
+
+function M.get_source_fingerprint(dir)
+    local uv = get_uv()
+    local root = dir or SOURCE_DIR
+    local max_sec, max_nsec, count = 0, 0, 0
+
+    local function walk(d)
+        local handle = uv.fs_scandir(d)
+        if not handle then
+            return
+        end
+        while true do
+            local name, typ = uv.fs_scandir_next(handle)
+            if not name then
+                break
+            end
+            local path = d .. "/" .. name
+            local st
+            if not typ then
+                st = uv.fs_stat(path)
+                typ = st and st.type or nil
+            end
+            if typ == "directory" then
+                walk(path)
+            elseif name:sub(-4) == ".lua" then
+                st = st or uv.fs_stat(path)
+                if st and st.mtime then
+                    count = count + 1
+                    local sec = st.mtime.sec or 0
+                    local nsec = st.mtime.nsec or 0
+                    if sec > max_sec or (sec == max_sec and nsec > max_nsec) then
+                        max_sec = sec
+                        max_nsec = nsec
+                    end
+                end
+            end
         end
     end
-    return ""
+
+    walk(root)
+    return str_format("%d:%d:%d", max_sec, max_nsec, count)
 end
 
 function M.hash(opts, colors)
+    local has_lazy = package.loaded.lazy ~= nil
     local lazy_keys = {}
-    if package.loaded.lazy ~= nil then
+    if has_lazy then
         local ok, lazy_cfg = pcall(require, "lazy.core.config")
-        if ok and lazy_cfg and lazy_cfg.plugins then
-            for k in pairs(lazy_cfg.plugins) do
-                table.insert(lazy_keys, k)
+        local lazy_plugins = ok and lazy_cfg and lazy_cfg.plugins or nil
+        if lazy_plugins then
+            for i = 1, #config.plugin_repos do
+                local repo = config.plugin_repos[i]
+                if lazy_plugins[repo] then
+                    lazy_keys[#lazy_keys + 1] = repo
+                end
             end
-            table.sort(lazy_keys)
         end
     end
 
     local state_table = {
+        v = M.CACHE_FORMAT_VERSION,
+        ver = require("neolux").version,
         transparent = opts.transparent,
         italic_comments = opts.italic_comments,
         styles = opts.styles,
         plugins = opts.plugins,
-        has_lazy = package.loaded.lazy ~= nil,
+        has_lazy = has_lazy,
         lazy_keys = lazy_keys,
         colors = colors,
     }
 
-    local payload = table.concat({
-        vim.inspect(state_table),
-        dump_fn(opts.on_colors),
-        dump_fn(opts.on_highlights),
-        get_source_mtime(),
-    }, "|")
+    local parts = {}
+    serialize_for_hash(state_table, parts)
+    parts[#parts + 1] = "|"
+    serialize_for_hash(opts.on_colors, parts)
+    parts[#parts + 1] = "|"
+    serialize_for_hash(opts.on_highlights, parts)
+    parts[#parts + 1] = "|"
+    parts[#parts + 1] = M.get_source_fingerprint()
 
-    return vim.fn.sha256(payload)
+    return M.hash_string(table.concat(parts))
 end
 
 function M.resolve_highlights(opts, colors)

@@ -296,6 +296,86 @@ test("syntax.get preserves style behavior for empty and non-empty styles", funct
     assert(hl_italic["@keyword.function"].bold ~= true, "@keyword.function stays non-bold")
 end)
 
+test("compiler.hash returns 16-char hex without loading vim.inspect", function()
+    package.loaded["vim.inspect"] = nil
+    rawset(vim, "inspect", nil)
+    local h = compiler.hash(config.options, neolux.colors)
+    assert(type(h) == "string" and h:match("^[0-9a-f]+$") and #h == 16, "hash must be 16-char lowercase hex: " .. tostring(h))
+    assert_eq(package.loaded["vim.inspect"], nil, "compiler.hash must not load vim.inspect")
+end)
+
+test("compiler.hash_string handles NUL bytes in both bit and pure-Lua paths", function()
+    assert(type(compiler.hash_string) == "function", "compiler.hash_string missing")
+    local b1 = compiler.hash_string("abc\0def")
+    local b2 = compiler.hash_string("abc\0xyz")
+    assert(#b1 == 16 and b1:match("^[0-9a-f]+$"), "bit hash format")
+    assert(b1 ~= b2, "bit hash must not truncate at NUL byte")
+
+    local p1 = compiler.hash_string("abc\0def", true)
+    local p2 = compiler.hash_string("abc\0xyz", true)
+    assert(#p1 == 16 and p1:match("^[0-9a-f]+$"), "pure-Lua hash format")
+    assert(p1 ~= p2, "pure-Lua hash must not truncate at NUL byte")
+end)
+
+test("compiler.hash ignores unrelated lazy.nvim plugins", function()
+    package.loaded["lazy"] = true
+    package.loaded["lazy.core.config"] = {
+        plugins = {
+            ["telescope.nvim"] = {},
+        },
+    }
+    local h1 = compiler.hash(config.options, neolux.colors)
+
+    package.loaded["lazy.core.config"].plugins["unrelated-plugin.nvim"] = {}
+    local h2 = compiler.hash(config.options, neolux.colors)
+    assert_eq(h2, h1, "unrelated lazy plugin must not invalidate cache hash")
+
+    package.loaded["lazy.core.config"].plugins["gitsigns.nvim"] = {}
+    local h3 = compiler.hash(config.options, neolux.colors)
+    assert(h3 ~= h1, "supported lazy plugin must change cache hash")
+end)
+
+test("get_source_fingerprint detects added, modified, and deleted lua files", function()
+    assert(type(compiler.get_source_fingerprint) == "function", "compiler.get_source_fingerprint missing")
+    local dir = tmp_root .. "/fp-test"
+    uv.fs_mkdir(dir, tonumber("755", 8))
+    uv.fs_mkdir(dir .. "/sub", tonumber("755", 8))
+
+    local function write_txt(p, content)
+        local fd = assert(io.open(p, "w"))
+        fd:write(content)
+        fd:close()
+    end
+
+    write_txt(dir .. "/a.lua", "return 1\n")
+    write_txt(dir .. "/sub/b.lua", "return 2\n")
+    local fp1 = compiler.get_source_fingerprint(dir)
+
+    write_txt(dir .. "/sub/c.lua", "return 3\n")
+    local fp2 = compiler.get_source_fingerprint(dir)
+    assert(fp2 ~= fp1, "adding sub/c.lua must change fingerprint")
+
+    uv.fs_utime(dir .. "/a.lua", 1800000100, 1800000100.123)
+    local fp3 = compiler.get_source_fingerprint(dir)
+    assert(fp3 ~= fp2, "modifying mtime of a.lua must change fingerprint")
+
+    uv.fs_unlink(dir .. "/sub/c.lua")
+    local fp4 = compiler.get_source_fingerprint(dir)
+    assert(fp4 ~= fp3, "deleting sub/c.lua must change fingerprint")
+end)
+
+test("get_source_fingerprint falls back to vim.loop when vim.uv is nil", function()
+    local saved_uv = vim.uv
+    local loop_tbl = vim.loop
+    if loop_tbl then
+        vim.uv = nil
+        local ok, fp = pcall(compiler.get_source_fingerprint)
+        vim.uv = saved_uv
+        assert(ok, "get_source_fingerprint failed with vim.uv=nil: " .. tostring(fp))
+        assert(type(fp) == "string" and #fp > 0, "fingerprint non-empty")
+    end
+end)
+
 rm_rf(tmp_root)
 set_cache_dir(orig_cache_dir)
 compiler.compiled_path = orig_compiled_path
