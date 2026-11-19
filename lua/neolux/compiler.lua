@@ -157,6 +157,86 @@ function M.hash(opts, colors)
     return M.hash_string(table.concat(parts))
 end
 
+local COLOR_KEYS = { fg = true, bg = true, sp = true }
+
+local function serialize_hl_value(key, val)
+    local t = type(val)
+    if t == "boolean" or t == "number" then
+        return tostring(val)
+    elseif t == "string" then
+        if COLOR_KEYS[key] and #val == 7 and val:match("^#%x%x%x%x%x%x$") then
+            return "0x" .. val:sub(2):lower()
+        end
+        return str_format("%q", val)
+    elseif t == "table" then
+        return M.serialize_hl(val)
+    end
+    return "nil"
+end
+
+function M.serialize_hl(spec)
+    local keys = {}
+    for k in pairs(spec) do
+        keys[#keys + 1] = k
+    end
+    table.sort(keys, function(a, b)
+        local ta, tb = type(a), type(b)
+        if ta ~= tb then
+            return ta < tb
+        end
+        return tostring(a) < tostring(b)
+    end)
+
+    local parts = {}
+    for i = 1, #keys do
+        local k = keys[i]
+        local key_str
+        if type(k) == "string" and k:match("^[%a_][%w_]*$") then
+            key_str = k
+        elseif type(k) == "number" then
+            key_str = "[" .. tostring(k) .. "]"
+        else
+            key_str = "[" .. str_format("%q", tostring(k)) .. "]"
+        end
+        parts[#parts + 1] = key_str .. "=" .. serialize_hl_value(k, spec[k])
+    end
+    return "{" .. table.concat(parts, ",") .. "}"
+end
+
+local function write_file_atomic(path, data)
+    local uv = get_uv()
+    local pid = uv and uv.os_getpid and uv.os_getpid() or vim.fn.getpid()
+    local tmp = str_format("%s.%d.tmp", path, pid)
+
+    local f = io.open(tmp, "wb")
+    if not f then
+        return false
+    end
+
+    local ok_w = f:write(data)
+    local ok_c = f:close()
+    if not ok_w or not ok_c then
+        os.remove(tmp)
+        return false
+    end
+
+    local renamed = false
+    if uv and uv.fs_rename then
+        local ok_r, res_r = pcall(uv.fs_rename, tmp, path)
+        renamed = ok_r and (res_r ~= nil)
+    end
+    if not renamed then
+        local ok_os = os.rename(tmp, path)
+        renamed = ok_os and true or false
+    end
+
+    if not renamed then
+        os.remove(tmp)
+        return false
+    end
+    return true
+end
+
 function M.resolve_highlights(opts, colors)
     local highlights = {}
     local modules = {
@@ -178,47 +258,61 @@ function M.resolve_highlights(opts, colors)
     return highlights
 end
 
-function M.compile(opts, colors)
-    opts = opts or require("neolux.config").options
-    if not colors then
-        colors = vim.deepcopy(require("neolux.palette"))
-        if type(opts.on_colors) == "function" then
-            opts.on_colors(colors)
-        end
-    end
+function M.compile(opts, colors, precomputed_hash)
+    opts = opts or config.options
+    colors = colors or require("neolux").resolve_colors(opts)
 
     local highlights = M.resolve_highlights(opts, colors)
+
+    local groups = {}
+    for group in pairs(highlights) do
+        groups[#groups + 1] = group
+    end
+    table.sort(groups)
+
+    local group_specs = {}
+    local spec_counts = {}
+    for i = 1, #groups do
+        local s = M.serialize_hl(highlights[groups[i]])
+        group_specs[i] = s
+        spec_counts[s] = (spec_counts[s] or 0) + 1
+    end
+
+    local shared_idx = {}
+    local shared_list = {}
+    for i = 1, #groups do
+        local s = group_specs[i]
+        if spec_counts[s] >= 2 and not shared_idx[s] then
+            local idx = #shared_list + 1
+            shared_idx[s] = idx
+            shared_list[idx] = s
+        end
+    end
 
     local lines = {
         "local set_hl = vim.api.nvim_set_hl",
         'vim.cmd("hi clear")',
-        'if vim.fn.exists("syntax_on") == 1 then vim.cmd("syntax reset") end',
+        'if vim.g.syntax_on then vim.cmd("syntax reset") end',
         'vim.o.background = "dark"',
         'vim.g.colors_name = "neolux"',
-        string.format("vim.g.terminal_color_0  = %q", colors.bg),
-        string.format("vim.g.terminal_color_1  = %q", colors.pink),
-        string.format("vim.g.terminal_color_2  = %q", colors.green),
-        string.format("vim.g.terminal_color_3  = %q", colors.yellow),
-        string.format("vim.g.terminal_color_4  = %q", colors.blue),
-        string.format("vim.g.terminal_color_5  = %q", colors.purple),
-        string.format("vim.g.terminal_color_6  = %q", colors.light_blue),
-        string.format("vim.g.terminal_color_7  = %q", colors.fg),
-        string.format("vim.g.terminal_color_8  = %q", colors.gray3),
-        string.format("vim.g.terminal_color_9  = %q", colors.pink),
-        string.format("vim.g.terminal_color_10 = %q", colors.green),
-        string.format("vim.g.terminal_color_11 = %q", colors.yellow),
-        string.format("vim.g.terminal_color_12 = %q", colors.light_blue),
-        string.format("vim.g.terminal_color_13 = %q", colors.purple),
-        string.format("vim.g.terminal_color_14 = %q", colors.light_blue),
-        string.format("vim.g.terminal_color_15 = %q", colors.fg),
     }
 
-    local groups = vim.tbl_keys(highlights)
-    table.sort(groups)
+    for i = 1, #config.terminal_colors do
+        lines[#lines + 1] = str_format("vim.g.terminal_color_%d = %q", i - 1, colors[config.terminal_colors[i]])
+    end
 
-    for _, group in ipairs(groups) do
-        local spec_str = vim.inspect(highlights[group]):gsub("%s+", " ")
-        table.insert(lines, string.format("set_hl(0, %q, %s)", group, spec_str))
+    if #shared_list > 0 then
+        lines[#lines + 1] = "local s = {" .. table.concat(shared_list, ",") .. "}"
+    end
+
+    for i = 1, #groups do
+        local s = group_specs[i]
+        local idx = shared_idx[s]
+        if idx then
+            lines[#lines + 1] = str_format("set_hl(0,%q,s[%d])", groups[i], idx)
+        else
+            lines[#lines + 1] = str_format("set_hl(0,%q,%s)", groups[i], s)
+        end
     end
 
     local src = table.concat(lines, "\n")
@@ -228,19 +322,12 @@ function M.compile(opts, colors)
     end
 
     local bytecode = string.dump(chunk, true)
-    vim.fn.mkdir(M.cache_dir, "p")
-
-    local f_bin = io.open(M.compiled_path, "wb")
-    if f_bin then
-        f_bin:write(bytecode)
-        f_bin:close()
-    end
-
-    local current_hash = M.hash(opts, colors)
-    local f_state = io.open(M.state_path, "w")
-    if f_state then
-        f_state:write(current_hash)
-        f_state:close()
+    local mk_ok = pcall(vim.fn.mkdir, M.cache_dir, "p")
+    if mk_ok then
+        local current_hash = precomputed_hash or M.hash(opts, colors)
+        if write_file_atomic(M.compiled_path, bytecode) then
+            write_file_atomic(M.state_path, current_hash)
+        end
     end
 
     return chunk
@@ -266,7 +353,7 @@ function M.load_or_compile(opts, colors)
         end
     end
 
-    local chunk = M.compile(opts, colors)
+    local chunk = M.compile(opts, colors, current_hash)
     chunk()
     return false
 end

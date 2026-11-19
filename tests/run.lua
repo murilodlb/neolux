@@ -49,7 +49,9 @@ end
 
 local function assert_eq(actual, expected, msg)
     if actual ~= expected then
-        error(string.format("%s (expected %s, got %s)", msg or "assertion failed", tostring(expected), tostring(actual)))
+        error(
+            string.format("%s (expected %s, got %s)", msg or "assertion failed", tostring(expected), tostring(actual))
+        )
     end
 end
 
@@ -300,7 +302,8 @@ test("compiler.hash returns 16-char hex without loading vim.inspect", function()
     package.loaded["vim.inspect"] = nil
     rawset(vim, "inspect", nil)
     local h = compiler.hash(config.options, neolux.colors)
-    assert(type(h) == "string" and h:match("^[0-9a-f]+$") and #h == 16, "hash must be 16-char lowercase hex: " .. tostring(h))
+    local is_hex16 = type(h) == "string" and h:match("^[0-9a-f]+$") ~= nil and #h == 16
+    assert(is_hex16, "hash must be 16-char lowercase hex: " .. tostring(h))
     assert_eq(package.loaded["vim.inspect"], nil, "compiler.hash must not load vim.inspect")
 end)
 
@@ -373,6 +376,144 @@ test("get_source_fingerprint falls back to vim.loop when vim.uv is nil", functio
         vim.uv = saved_uv
         assert(ok, "get_source_fingerprint failed with vim.uv=nil: " .. tostring(fp))
         assert(type(fp) == "string" and #fp > 0, "fingerprint non-empty")
+    end
+end)
+
+test("serialize_hl converts hex RGB without loading vim.inspect", function()
+    assert(type(compiler.serialize_hl) == "function", "compiler.serialize_hl missing")
+    package.loaded["vim.inspect"] = nil
+    rawset(vim, "inspect", nil)
+
+    local s1 = compiler.serialize_hl({ fg = "#55EFEF", bg = "NONE", bold = true })
+    assert(s1:find("0x55efef", 1, true) ~= nil, "expected 0x55efef in: " .. s1)
+    assert(s1:find('"NONE"', 1, true) ~= nil, 'expected "NONE" in: ' .. s1)
+    assert(s1:find("bold=true", 1, true) ~= nil, "expected bold=true in: " .. s1)
+
+    local s2 = compiler.serialize_hl({ fg = "Red", cterm = { bold = true, ["under-curl"] = true } })
+    assert(s2:find('"Red"', 1, true) ~= nil, "expected named color Red preserved in: " .. s2)
+    assert(s2:find('["under-curl"]=true', 1, true) ~= nil, "expected non-identifier key escaped in: " .. s2)
+
+    local parsed = assert(load("return " .. s1))()
+    assert_eq(parsed.fg, 0x55efef, "parsed fg integer")
+    assert_eq(parsed.bg, "NONE", "parsed bg NONE")
+    assert_eq(parsed.bold, true, "parsed bold")
+
+    assert_eq(package.loaded["vim.inspect"], nil, "serialize_hl must not load vim.inspect")
+end)
+
+test("compile handles more than 200 shared specs without hitting local limit", function()
+    neolux.setup({
+        on_highlights = function(hl)
+            for i = 1, 250 do
+                local fg = string.format("#%06x", i)
+                hl["NeoluxManyA" .. i] = { fg = fg, bold = true }
+                hl["NeoluxManyB" .. i] = { fg = fg, bold = true }
+            end
+        end,
+    })
+    vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("NeoluxManyA250").fg, 250, "NeoluxManyA250 fg")
+    assert_eq(get_hl("NeoluxManyB250").fg, 250, "NeoluxManyB250 fg")
+
+    local hit = compiler.load_or_compile(config.options, neolux.colors)
+    assert_eq(hit, true, "250+ shared specs cache hit")
+    assert_eq(get_hl("NeoluxManyA123").fg, 123, "NeoluxManyA123 fg after cache hit")
+end)
+
+test("load_or_compile hashes only once on cache miss", function()
+    local orig_hash = compiler.hash
+    local calls = 0
+    compiler.hash = function(opts, colors)
+        calls = calls + 1
+        return orig_hash(opts, colors)
+    end
+    local ok, hit = pcall(compiler.load_or_compile, config.options, neolux.colors)
+    compiler.hash = orig_hash
+    assert(ok, "load_or_compile failed: " .. tostring(hit))
+    assert_eq(hit, false, "cold load_or_compile returns false")
+    assert_eq(calls, 1, "compiler.hash should only be called once on cache miss")
+end)
+
+test("corrupted compiled.luac recovers automatically", function()
+    vim.cmd("colorscheme neolux")
+    local f = assert(io.open(compiler.compiled_path, "wb"))
+    f:write("not-valid-bytecode")
+    f:close()
+
+    local hit = compiler.load_or_compile(config.options, neolux.colors)
+    assert_eq(hit, false, "corrupted bytecode triggers recompile")
+    assert_eq(get_hl("Normal").fg, 0xffffff, "Normal restored after recovery")
+
+    local hit2 = compiler.load_or_compile(config.options, neolux.colors)
+    assert_eq(hit2, true, "subsequent load hits repaired cache")
+end)
+
+test("read-only or unwritable cache dir falls back cleanly", function()
+    local blocker = tmp_root .. "/blocker_file"
+    local fd = assert(io.open(blocker, "w"))
+    fd:write("block")
+    fd:close()
+    set_cache_dir(blocker .. "/nested")
+
+    local ok1, err1 = pcall(vim.cmd, "colorscheme neolux")
+    assert(ok1, "colorscheme failed when mkdir blocked: " .. tostring(err1))
+    assert_eq(get_hl("Normal").fg, 0xffffff, "Normal applied despite mkdir failure")
+
+    local ro_dir = tmp_root .. "/ro_cache"
+    uv.fs_mkdir(ro_dir, tonumber("755", 8))
+    uv.fs_chmod(ro_dir, tonumber("555", 8))
+    set_cache_dir(ro_dir)
+
+    local ok2, err2 = pcall(neolux.compile)
+    local ok3, err3 = pcall(vim.cmd, "colorscheme neolux")
+    pcall(uv.fs_chmod, ro_dir, tonumber("755", 8))
+    assert(ok2, "neolux.compile failed on read-only cache_dir: " .. tostring(err2))
+    assert(ok3, "colorscheme failed on read-only cache_dir: " .. tostring(err3))
+    assert_eq(get_hl("Normal").bg, 0x000000, "Normal bg applied on read-only cache_dir")
+end)
+
+test("atomic writes leave no temporary files", function()
+    vim.cmd("colorscheme neolux")
+    local seen = {}
+    local handle = uv.fs_scandir(compiler.cache_dir)
+    if handle then
+        while true do
+            local name = uv.fs_scandir_next(handle)
+            if not name then
+                break
+            end
+            seen[#seen + 1] = name
+        end
+    end
+    table.sort(seen)
+    assert_eq(#seen, 2, "expected exactly 2 files in cache_dir, got: " .. table.concat(seen, ", "))
+    assert_eq(seen[1], "compiled.luac", "first cache file")
+    assert_eq(seen[2], "state.txt", "second cache file")
+end)
+
+test("pixel-for-pixel highlight parity between uncached and warm cache", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+    local uncached = vim.api.nvim_get_hl(0, {})
+    local uncached_tc = {}
+    for i = 0, 15 do
+        uncached_tc[i] = vim.g["terminal_color_" .. i]
+    end
+
+    neolux.setup({ cache = true })
+    vim.cmd("colorscheme neolux")
+    local hit = compiler.load_or_compile(config.options, neolux.colors)
+    assert_eq(hit, true, "warm cache hit for parity check")
+    local cached = vim.api.nvim_get_hl(0, {})
+
+    for name, spec in pairs(uncached) do
+        assert(vim.deep_equal(cached[name], spec), "highlight mismatch for group: " .. name)
+    end
+    for name, spec in pairs(cached) do
+        assert(vim.deep_equal(uncached[name], spec), "extra cached highlight group: " .. name)
+    end
+    for i = 0, 15 do
+        assert_eq(vim.g["terminal_color_" .. i], uncached_tc[i], "terminal_color_" .. i .. " parity")
     end
 end)
 
