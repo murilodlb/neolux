@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2026-11-19
+
+### Added
+- **Plugin Integrations (`lua/neolux/plugins/`)**: Added 12 new highlight modules, growing from 10 to 22 modules (31 mapped repositories): `snacks.nvim`, `which-key.nvim`, `noice.nvim`, `flash.nvim`, `trouble.nvim`, `render-markdown.nvim`, `fzf-lua`, `todo-comments.nvim`, `nvim-tree.lua`, `mini.nvim` (including standalone `mini.*` repositories), `diffview.nvim` and `nvim-notify`. Sidebar, gutter and dashboard groups respect `transparent`, and `NotifyBackground` always uses `palette.bg` so `nvim-notify` never warns.
+- **Headless Regression Test Suite (`tests/run.lua`)**: Added 27 tests covering cached/uncached highlight parity, link target resolution, `lazy.nvim` auto-detection and `transparent = true` behavior. The suite now runs in CI (`.github/workflows/ci.yml`).
+- **Benchmark Harness (`scripts/benchmark.lua`)**: Added load-time measurement for uncached, cold-cache and warm-cache scenarios.
+- **Function Keyword Style (`lua/neolux/syntax.lua`)**: Added `function_kw_style`, with a commented-out `italic = true` attribute reserved for a future version.
+
+### Changed
+- **Cache Signature (`lua/neolux/compiler.lua`)**: Replaced `vim.fn.sha256` and `vim.inspect` with a LuaJIT 64-bit hash and a dynamic `mtime` scan of every `.lua` file under `lua/neolux/`, removing the Vimscript bridge.
+- **Compiled Bytecode (`lua/neolux/compiler.lua`)**: Hex colors are emitted as 24-bit integer RGB values, repeated tables are deduplicated, `compiled.luac` is written atomically, and a read-only cache directory falls back gracefully.
+- **Registry Refactor (`lua/neolux/config.lua`, `lua/neolux/init.lua`, `lua/neolux/plugins/init.lua`)**: Deduplicated plugin registries, terminal colors (now set in a loop from `config.terminal_colors`) and palette copies (`vim.deepcopy` replaced by a shallow copy through the shared `resolve_colors`). `vim.fn.exists("syntax_on")` became `vim.g.syntax_on`.
+- **Indent Scope Groups**: Moved `MiniIndentscopeSymbol` and `MiniIndentscopePrefix` from `indent-blankline.lua` to `mini.lua`.
+- **Documentation (`README.md`, `doc/neolux.txt`)**: Updated the cache section and the supported plugin list.
+
+### Fixed
+- **Keyword Weights (`lua/neolux/syntax.lua`)**: `@keyword.function` and `@keyword.type` (e.g. `def`, `class`) are no longer bold and still inherit user customizations from `styles.keywords`. `with_style` now ignores empty style tables.
+- **Hash Finalizer (`lua/neolux/compiler.lua`)**: Fixed the avalanche of the 64-bit hash finalizer and a test that depended on a relative `mtime`.
+
 ## [0.0.4] - 2026-11-01
 
 ### Added

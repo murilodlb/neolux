@@ -3,7 +3,7 @@ local base_palette = require("neolux.palette")
 
 local M = {}
 
-M.version = "0.0.4"
+M.version = "0.0.5"
 
 local function copy_palette(src)
     local dst = {}

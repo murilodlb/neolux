@@ -546,10 +546,7 @@ test("all 22 plugin modules load non-empty tables with valid link targets", func
         for group, spec in pairs(hls) do
             if type(spec) == "table" and spec.link then
                 local resolved = vim.api.nvim_get_hl(0, { name = spec.link, link = false })
-                assert(
-                    next(resolved) ~= nil,
-                    string.format("dangling link %s -> %s in %s", group, spec.link, mod_name)
-                )
+                assert(next(resolved) ~= nil, string.format("dangling link %s -> %s in %s", group, spec.link, mod_name))
             end
         end
     end
