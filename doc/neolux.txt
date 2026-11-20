@@ -191,15 +191,27 @@ Tokens e os seguintes plugins:
 
 - `blink.cmp` (`blink`)
 - `bufferline.nvim` (`bufferline`)
+- `diffview.nvim` (`diffview`)
+- `flash.nvim` (`flash`)
+- `fzf-lua` (`fzf-lua`)
 - `gitsigns.nvim` (`gitsigns`)
-- `indent-blankline.nvim` / `mini.indentscope` (`indent-blankline`)
+- `indent-blankline.nvim` (`indent-blankline`)
 - `lazy.nvim` (`lazy`)
 - `lualine.nvim` (via tema `neolux`)
 - `mason.nvim` (`mason`)
+- `mini.nvim` / `mini.*` (`mini`)
 - `neo-tree.nvim` (`neo-tree`)
+- `noice.nvim` (`noice`)
 - `nvim-cmp` (`cmp`)
+- `nvim-notify` (`notify`)
+- `nvim-tree.lua` (`nvim-tree`)
 - `rainbow-delimiters.nvim` (`rainbow-delimiters`)
+- `render-markdown.nvim` (`render-markdown`)
+- `snacks.nvim` (`snacks`)
 - `telescope.nvim` (`telescope`)
+- `todo-comments.nvim` (`todo-comments`)
+- `trouble.nvim` (`trouble`)
+- `which-key.nvim` (`which-key`)
 
 ==============================================================================
 7. LUALINE                                                   *neolux-lualine*
@@ -216,16 +228,19 @@ Para utilizar o tema do Neolux no `lualine.nvim`: >lua
 
 Na primeira vez em que o tema é carregado, o Neolux resolve todas as cores,
 grupos do editor, sintaxe, integrações de plugins e callbacks do usuário,
+convertendo cores em inteiros RGB, deduplicando tabelas compartilhadas e
 compilando todas as chamadas `nvim_set_hl` em um único arquivo binário
-otimizado (`compiled.luac`) salvo em `stdpath("cache") .. "/neolux"`.
+otimizado (`compiled.luac`) gravado atomicamente em
+`stdpath("cache") .. "/neolux"`.
 
 Nas inicializações seguintes, o bytecode pré-compilado é carregado
 diretamente. O cache é invalidado e recompilado automaticamente através de um
-hash SHA-256 sempre que:
+hash de 64 bits em LuaJIT (sem sobrecarga de Vimscript) sempre que:
 - As opções de `require("neolux").setup({...})` mudam;
 - O bytecode de `on_colors` ou `on_highlights` é alterado;
-- A lista de plugins do `lazy.nvim` muda;
-- Qualquer arquivo-fonte do tema é modificado (`mtime`).
+- A lista de plugins suportados do `lazy.nvim` muda;
+- Qualquer arquivo `.lua` dentro de `lua/neolux/` é adicionado, removido ou
+  modificado (`mtime`).
 
 ==============================================================================
 9. COMANDOS E API LUA                                       *neolux-comandos*
