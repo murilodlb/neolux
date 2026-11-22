@@ -1,14 +1,16 @@
 local M = {}
 
-function M.get(palette)
+function M.get(palette, opts)
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+
     return {
-        FzfLuaNormal = { fg = palette.fg, bg = palette.gray1 },
-        FzfLuaBorder = { fg = palette.gray3, bg = palette.gray1 },
+        FzfLuaNormal = { fg = palette.fg, bg = bgs.float },
+        FzfLuaBorder = { fg = palette.gray3, bg = bgs.float },
         FzfLuaTitle = { fg = palette.bg, bg = palette.orange, bold = true },
         FzfLuaBackdrop = { bg = palette.bg },
 
-        FzfLuaPreviewNormal = { fg = palette.fg, bg = palette.gray1 },
-        FzfLuaPreviewBorder = { fg = palette.gray3, bg = palette.gray1 },
+        FzfLuaPreviewNormal = { fg = palette.fg, bg = bgs.float },
+        FzfLuaPreviewBorder = { fg = palette.gray3, bg = bgs.float },
         FzfLuaPreviewTitle = { fg = palette.bg, bg = palette.green, bold = true },
 
         FzfLuaCursorLine = { bg = palette.gray2 },
@@ -33,7 +35,7 @@ function M.get(palette)
         FzfLuaFzfPrompt = { fg = palette.orange, bold = true },
         FzfLuaFzfInfo = { fg = palette.gray3 },
         FzfLuaFzfHeader = { fg = palette.gray3 },
-        FzfLuaFzfBorder = { fg = palette.gray3, bg = palette.gray1 },
+        FzfLuaFzfBorder = { fg = palette.gray3, bg = bgs.float },
     }
 end
 

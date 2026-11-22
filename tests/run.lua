@@ -88,6 +88,12 @@ test("loads default colorscheme and terminal colors 0-15", function()
         local tc = vim.g["terminal_color_" .. i]
         assert(type(tc) == "string" and #tc > 0, "terminal_color_" .. i .. " missing")
     end
+    assert_eq(vim.g.terminal_color_0, "#0c0c0c", "terminal_color_0")
+    assert_eq(vim.g.terminal_color_1, "#c5003c", "terminal_color_1")
+    assert_eq(vim.g.terminal_color_4, "#044b8b", "terminal_color_4")
+    assert_eq(vim.g.terminal_color_9, "#f84285", "terminal_color_9")
+    assert_eq(vim.g.terminal_color_10, "#5cd85a", "terminal_color_10")
+    assert_eq(vim.g.terminal_color_15, "#f5f1e8", "terminal_color_15")
 end)
 
 test("preserves core, diagnostic, lsp, and non-bold def/class highlights", function()
@@ -377,9 +383,17 @@ test("get_source_fingerprint detects added, modified, and deleted lua files", fu
         fp3 = fp3_sub
     end
 
+    uv.fs_utime(dir .. "/a.lua", next_sec - 100, next_sec - 100)
+    local fp_older = compiler.get_source_fingerprint(dir)
+    assert(fp_older ~= fp3, "moving mtime backward must change fingerprint")
+
+    write_txt(dir .. "/a.lua", "return 123456\n")
+    local fp_size = compiler.get_source_fingerprint(dir)
+    assert(fp_size ~= fp_older, "changing file size must change fingerprint")
+
     uv.fs_unlink(dir .. "/sub/c.lua")
     local fp4 = compiler.get_source_fingerprint(dir)
-    assert(fp4 ~= fp3, "deleting sub/c.lua must change fingerprint")
+    assert(fp4 ~= fp_size, "deleting sub/c.lua must change fingerprint")
 end)
 
 test("get_source_fingerprint falls back to vim.loop when vim.uv is nil", function()
@@ -636,6 +650,9 @@ test("transparent mode clears bg on sidebars/signs/dashboard while preserving No
         "MiniDiffSignAdd",
         "TodoSignTODO",
         "SnacksDashboardNormal",
+        "TelescopePreviewNormal",
+        "BufferLineBufferSelected",
+        "MiniTablineHidden",
     }
     for _, name in ipairs(cleared) do
         local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
@@ -643,11 +660,277 @@ test("transparent mode clears bg on sidebars/signs/dashboard while preserving No
         assert_eq(hl.bg, nil, name .. ".bg should be cleared in transparent mode")
     end
 
+    assert_eq(get_hl("BufferLineFill").bg, nil, "BufferLineFill.bg should be cleared in transparent mode")
+    assert_eq(get_hl("MiniTablineFill").bg, nil, "MiniTablineFill.bg should be cleared in transparent mode")
+
+    assert_eq(get_hl("EndOfBuffer").fg, 0x3c3c3a, "EndOfBuffer.fg should be gray2 in transparent mode")
+
     local notify_bg = vim.api.nvim_get_hl(0, { name = "NotifyBackground", link = false })
     assert_eq(notify_bg.bg, 0x000000, "NotifyBackground.bg preserved in transparent mode")
 
+    package.loaded["lualine.themes.neolux"] = nil
+    local lualine_t = require("lualine.themes.neolux")
+    assert_eq(lualine_t.normal.c.bg, "NONE", "lualine normal.c.bg should be NONE in transparent mode")
+    assert_eq(lualine_t.inactive.c.bg, "NONE", "lualine inactive.c.bg should be NONE in transparent mode")
+    for _, mode in ipairs({ "normal", "insert", "visual", "replace", "command", "terminal" }) do
+        assert_eq(lualine_t[mode].a.fg, "#000000", "lualine " .. mode .. ".a.fg should be #000000")
+    end
+
     neolux.setup({ transparent = false, cache = false })
     vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("EndOfBuffer").fg, 0x000000, "EndOfBuffer.fg should be bg when opaque")
+end)
+
+test("compiler.hash detects closure upvalues and handles cyclic table upvalues", function()
+    local function make_on_colors(accent)
+        return function(colors)
+            colors.pink = accent
+        end
+    end
+
+    neolux.setup({ on_colors = make_on_colors("#ff0055") })
+    local h1 = compiler.hash(config.options, neolux.resolve_colors())
+
+    neolux.setup({ on_colors = make_on_colors("#00ff88") })
+    local h2 = compiler.hash(config.options, neolux.resolve_colors())
+    assert(h1 ~= h2, "changing captured upvalue must invalidate compiler.hash")
+
+    local cyclic = { a = 1 }
+    cyclic.self_ref = cyclic
+    neolux.setup({
+        on_colors = function(colors)
+            if cyclic.a == 2 then
+                colors.pink = "#123456"
+            end
+        end,
+    })
+    local ok, h3 = pcall(compiler.hash, config.options, neolux.resolve_colors())
+    assert(ok and type(h3) == "string" and #h3 > 0, "cyclic table upvalue must not overflow: " .. tostring(h3))
+end)
+
+test("contrast and rainbow-delimiters highlight fixes", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    assert_eq(get_hl("TabLineSel").fg, 0x000000, "TabLineSel.fg")
+    assert_eq(get_hl("MiniStatuslineModeNormal").fg, 0x000000, "MiniStatuslineModeNormal.fg")
+    assert_eq(get_hl("RainbowDelimiterYellow").fg, 0xffcc00, "RainbowDelimiterYellow.fg")
+    assert_eq(get_hl("RainbowDelimiterRed").fg, 0xf84285, "RainbowDelimiterRed.fg")
+    assert_eq(get_hl("NeoTreeWinSeparator").fg, 0x3c3c3a, "NeoTreeWinSeparator.fg")
+end)
+
+test("no dangling link targets in editor and syntax modules", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    local modules = {
+        editor = require("neolux.editor").get(neolux.colors, config.options),
+        syntax = require("neolux.syntax").get(neolux.colors, config.options),
+    }
+
+    for mod_name, hls in pairs(modules) do
+        for group, spec in pairs(hls) do
+            if type(spec) == "table" and spec.link then
+                local resolved = vim.api.nvim_get_hl(0, { name = spec.link, link = false })
+                assert(next(resolved) ~= nil, string.format("dangling link %s -> %s in %s", group, spec.link, mod_name))
+            end
+        end
+    end
+end)
+
+test("expanded tree-sitter captures and comment documentation styles", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    local err = get_hl("@comment.error")
+    assert_eq(err.bg, 0xf84285, "@comment.error.bg")
+    assert_eq(err.fg, 0x000000, "@comment.error.fg")
+    assert_eq(err.bold, true, "@comment.error.bold")
+
+    assert_eq(get_hl("@comment.warning").bg, 0xffcc00, "@comment.warning.bg")
+    assert_eq(get_hl("@comment.todo").bg, 0x55efef, "@comment.todo.bg")
+    assert_eq(get_hl("@comment.note").bg, 0xe6db74, "@comment.note.bg")
+
+    assert_eq(get_hl("@diff.plus").fg, 0x2fff73, "@diff.plus.fg")
+    assert_eq(get_hl("@diff.minus").fg, 0xf84285, "@diff.minus.fg")
+    assert_eq(get_hl("@diff.delta").fg, 0xffcc00, "@diff.delta.fg")
+
+    assert_eq(get_hl("@markup.math").fg, 0x55efef, "@markup.math.fg")
+    assert_eq(get_hl("@markup.quote").italic, true, "@markup.quote.italic")
+    assert_eq(get_hl("@markup.strikethrough").strikethrough, true, "@markup.strikethrough.strikethrough")
+    assert_eq(get_hl("@markup.environment").fg, 0xf84285, "@markup.environment.fg")
+
+    assert_eq(get_hl("@function.macro").fg, 0x55efef, "@function.macro.fg")
+    assert_eq(get_hl("@number.float").fg, 0x9c6de7, "@number.float.fg")
+    assert_eq(get_hl("@keyword.modifier").fg, 0x55efef, "@keyword.modifier.fg")
+    assert_eq(get_hl("@keyword.conditional").bold, true, "@keyword.conditional.bold")
+
+    assert_eq(get_hl("@comment.documentation").italic, true, "@comment.documentation italic by default")
+
+    neolux.setup({ cache = false, italic_comments = false })
+    vim.cmd("colorscheme neolux")
+    assert(
+        get_hl("@comment.documentation").italic ~= true,
+        "@comment.documentation must not be italic when italic_comments = false"
+    )
+end)
+
+test("LSP semantic token coverage and explicit clears", function()
+    neolux.setup({ cache = false })
+    vim.cmd("colorscheme neolux")
+
+    assert(vim.tbl_isempty(get_hl("@lsp.type.variable")), "@lsp.type.variable must be cleared")
+    assert(vim.tbl_isempty(get_hl("@lsp.type.comment")), "@lsp.type.comment must be cleared")
+    assert_eq(get_hl("@lsp.typemod.variable.parameter").fg, 0xf98800, "@lsp.typemod.variable.parameter.fg")
+
+    assert_eq(get_hl("@lsp.type.typeParameter").fg, 0xf98800, "@lsp.type.typeParameter.fg")
+    assert_eq(get_hl("@lsp.type.interface").fg, 0x55efef, "@lsp.type.interface.fg")
+    assert_eq(get_hl("@lsp.type.enumMember").fg, 0x9c6de7, "@lsp.type.enumMember.fg")
+    assert_eq(get_hl("@lsp.mod.deprecated").strikethrough, true, "@lsp.mod.deprecated.strikethrough")
+    assert_eq(get_hl("@lsp.type.unresolvedReference").undercurl, true, "@lsp.type.unresolvedReference.undercurl")
+end)
+
+test("new core editor UI groups and message transparency", function()
+    neolux.setup({ cache = false, transparent = false })
+    vim.cmd("colorscheme neolux")
+
+    assert_eq(get_hl("Conceal").fg, 0x57595b, "Conceal.fg")
+    assert_eq(get_hl("Whitespace").fg, 0x3c3c3a, "Whitespace.fg")
+    assert_eq(get_hl("SpecialKey").fg, 0x57595b, "SpecialKey.fg")
+    assert_eq(get_hl("QuickFixLine").bg, 0x3c3c3a, "QuickFixLine.bg")
+    assert_eq(get_hl("Substitute").bg, 0xf84285, "Substitute.bg")
+    assert_eq(get_hl("FloatFooter").bg, 0x0c0c0c, "FloatFooter.bg")
+    assert_eq(get_hl("SnippetTabstop").bg, 0x3c3c3a, "SnippetTabstop.bg")
+    assert_eq(get_hl("TermCursor").bg, 0xf98800, "TermCursor.bg")
+
+    assert_eq(get_hl("MsgArea").bg, 0x000000, "MsgArea.bg when opaque")
+    assert_eq(get_hl("MsgSeparator").bg, 0x000000, "MsgSeparator.bg when opaque")
+
+    neolux.setup({ cache = false, transparent = true })
+    vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("MsgArea").bg, nil, "MsgArea.bg cleared in transparent mode")
+    assert_eq(get_hl("MsgSeparator").bg, nil, "MsgSeparator.bg cleared in transparent mode")
+end)
+
+test("styles.floats supports dark, normal, and transparent modes", function()
+    neolux.setup({
+        cache = false,
+        transparent = false,
+        styles = { floats = "transparent" },
+    })
+    vim.cmd("colorscheme neolux")
+
+    local float_groups = {
+        "NormalFloat",
+        "FloatBorder",
+        "Pmenu",
+        "TelescopeNormal",
+        "WhichKeyNormal",
+        "NoiceCmdlinePopup",
+        "SnacksPicker",
+        "FzfLuaNormal",
+        "BlinkCmpMenu",
+        "LazyNormal",
+        "MiniFilesNormal",
+        "NotifyERRORBody",
+    }
+    for _, name in ipairs(float_groups) do
+        assert_eq(get_hl(name).bg, nil, name .. ".bg should be cleared when floats='transparent'")
+    end
+    assert_eq(get_hl("NotifyBackground").bg, 0x000000, "NotifyBackground.bg remains opaque when floats='transparent'")
+
+    neolux.setup({
+        cache = false,
+        transparent = false,
+        styles = { floats = "normal" },
+    })
+    vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("NormalFloat").bg, 0x000000, "NormalFloat.bg matches normal bg when floats='normal'")
+    assert_eq(get_hl("TelescopeNormal").bg, 0x000000, "TelescopeNormal.bg matches normal bg when floats='normal'")
+
+    neolux.setup({
+        cache = false,
+        transparent = true,
+        styles = { floats = "normal" },
+    })
+    vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("NormalFloat").bg, nil, "NormalFloat.bg clears when floats='normal' and transparent=true")
+end)
+
+test("styles.sidebars supports normal, dark, and transparent modes", function()
+    neolux.setup({
+        cache = false,
+        transparent = false,
+        styles = { sidebars = "dark" },
+    })
+    vim.cmd("colorscheme neolux")
+
+    local sidebars = { "NeoTreeNormal", "NvimTreeNormal", "TroubleNormal", "DiffviewNormal" }
+    for _, name in ipairs(sidebars) do
+        assert_eq(get_hl(name).bg, 0x0c0c0c, name .. ".bg should be gray1 when sidebars='dark'")
+    end
+    assert_eq(get_hl("NeoTreeEndOfBuffer").fg, 0x0c0c0c, "NeoTreeEndOfBuffer.fg matches dark sidebar")
+
+    neolux.setup({
+        cache = false,
+        transparent = false,
+        styles = { sidebars = "transparent" },
+    })
+    vim.cmd("colorscheme neolux")
+    assert_eq(get_hl("Normal").bg, 0x000000, "Normal.bg stays opaque when only sidebars='transparent'")
+    for _, name in ipairs(sidebars) do
+        assert_eq(get_hl(name).bg, nil, name .. ".bg should be cleared when sidebars='transparent'")
+    end
+    assert_eq(get_hl("NeoTreeEndOfBuffer").fg, 0x3c3c3a, "NeoTreeEndOfBuffer.fg is gray2 when sidebars='transparent'")
+end)
+
+test("compiler.hash invalidates when styles.floats or styles.sidebars changes", function()
+    neolux.setup({ styles = { floats = "dark", sidebars = "normal" } })
+    local h_default = compiler.hash(config.options, neolux.resolve_colors())
+
+    neolux.setup({ styles = { floats = "transparent", sidebars = "normal" } })
+    local h_float = compiler.hash(config.options, neolux.resolve_colors())
+    assert(h_default ~= h_float, "changing styles.floats must change compiler.hash")
+
+    neolux.setup({ styles = { floats = "dark", sidebars = "dark" } })
+    local h_sidebar = compiler.hash(config.options, neolux.resolve_colors())
+    assert(h_default ~= h_sidebar, "changing styles.sidebars must change compiler.hash")
+end)
+
+test("generated extras files exist and stay synced with palette", function()
+    local expected_files = {
+        "extras/wezterm/neolux.lua",
+        "extras/wezterm/neolux.toml",
+        "extras/ghostty/neolux",
+        "extras/ghostty/neolux.conf",
+        "extras/kitty/neolux.conf",
+        "extras/fzf/neolux.sh",
+        "extras/tmux/neolux.tmux",
+    }
+    for _, path in ipairs(expected_files) do
+        assert(uv.fs_stat(path) ~= nil, "missing generated extra file: " .. path)
+    end
+
+    local t = dofile("extras/wezterm/neolux.lua")
+    assert_eq(t.background, neolux.colors.bg, "wezterm background")
+    assert_eq(t.cursor_bg, neolux.colors.orange, "wezterm cursor_bg")
+    assert_eq(#t.ansi, 8, "wezterm ansi length")
+    assert_eq(#t.brights, 8, "wezterm brights length")
+    assert_eq(t.ansi[2], neolux.colors.red, "wezterm ansi[2] red")
+
+    local function read_all(p)
+        local fd = assert(io.open(p, "rb"))
+        local data = fd:read("*a")
+        fd:close()
+        return data
+    end
+
+    for _, p in ipairs({ "extras/fzf/neolux.sh", "extras/tmux/neolux.tmux" }) do
+        local content = read_all(p)
+        assert(content:find(neolux.colors.orange, 1, true) ~= nil, p .. " missing orange hex")
+        assert(content:find(neolux.colors.light_blue, 1, true) ~= nil, p .. " missing light_blue hex")
+        assert(content:find(neolux.colors.bg, 1, true) ~= nil, p .. " missing bg hex")
+    end
 end)
 
 rm_rf(tmp_root)

@@ -100,6 +100,8 @@ caso deseje personalizar o comportamento padrão: >lua
             keywords = { bold = true },
             functions = {},
             variables = {},
+            floats = "dark",
+            sidebars = "normal",
         },
         on_colors = function(colors) end,
         on_highlights = function(highlights, colors) end,
@@ -122,11 +124,17 @@ Opções disponíveis:
   Atalho para ativar/desativar itálico em comentários (`styles.comments.italic`).
 
 - `styles` (table)
-  Tabela de estilos repassados a `nvim_set_hl` para categorias sintáticas:
+  Tabela de estilos repassados a `nvim_set_hl` para categorias sintáticas e
+  estilo de fundo de superfícies:
   - `styles.comments` (padrão: `{ italic = true }`)
   - `styles.keywords` (padrão: `{ bold = true }`)
   - `styles.functions` (padrão: `{}`)
   - `styles.variables` (padrão: `{}`)
+  - `styles.floats` (padrão: `"dark"`): estilo de fundo para janelas
+    flutuantes e menus (`"dark"`, `"transparent"` ou `"normal"`).
+  - `styles.sidebars` (padrão: `"normal"`): estilo de fundo para barras
+    laterais como Neo-tree, Nvim-tree, Trouble e Diffview (`"dark"`,
+    `"transparent"` ou `"normal"`).
 
 - `on_colors` (function(colors))
   Callback executado sobre a tabela de cores da paleta antes de gerar os
@@ -173,7 +181,7 @@ A paleta padrão pode ser inspecionada via `require("neolux").colors`:
     `green`       `#2fff73`   Nomes de funções e métodos
     `pink`        `#f84285`   Controle de fluxo (`for`, `while`, `return`)
     `yellow`      `#ffcc00`   Strings, delimitadores e avisos
-    `purple`      `#723ec3`   Constantes, números e booleanos
+    `purple`      `#9c6de7`   Constantes, números e booleanos
     `blue`        `#2495ff`   Delimitadores internos e informações
     `dark_blue`   `#044b8b`   Contraste de texto em barras de status
     `tint_pink`   `#2a0a16`   Fundo sutil para erros e remoções em diff

@@ -1,9 +1,11 @@
 local M = {}
 
-function M.get(palette)
+function M.get(palette, opts)
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+
     return {
-        LazyNormal = { fg = palette.fg, bg = palette.gray1 },
-        LazyBorder = { fg = palette.gray3, bg = palette.gray1 },
+        LazyNormal = { fg = palette.fg, bg = bgs.float },
+        LazyBorder = { fg = palette.gray3, bg = bgs.float },
         LazyButton = { fg = palette.fg, bg = palette.gray2 },
         LazyButtonActive = { fg = palette.bg, bg = palette.orange, bold = true },
         LazyH1 = { fg = palette.bg, bg = palette.orange, bold = true },

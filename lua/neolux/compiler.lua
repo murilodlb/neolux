@@ -2,7 +2,7 @@ local config = require("neolux.config")
 
 local M = {}
 
-M.CACHE_FORMAT_VERSION = 2
+M.CACHE_FORMAT_VERSION = 3
 M.cache_dir = vim.fn.stdpath("cache") .. "/neolux"
 M.compiled_path = M.cache_dir .. "/compiled.luac"
 M.state_path = M.cache_dir .. "/state.txt"
@@ -46,9 +46,15 @@ function M.hash_string(str, force_pure_lua)
     return str_format("%08x%08x", h1, h2)
 end
 
-local function serialize_for_hash(value, out)
+local function serialize_for_hash(value, out, seen)
+    seen = seen or {}
     local t = type(value)
     if t == "table" then
+        if seen[value] then
+            out[#out + 1] = "<cycle>"
+            return
+        end
+        seen[value] = true
         out[#out + 1] = "{"
         local keys = {}
         for k in pairs(value) do
@@ -63,15 +69,31 @@ local function serialize_for_hash(value, out)
         end)
         for i = 1, #keys do
             local k = keys[i]
-            serialize_for_hash(k, out)
+            serialize_for_hash(k, out, seen)
             out[#out + 1] = "="
-            serialize_for_hash(value[k], out)
+            serialize_for_hash(value[k], out, seen)
             out[#out + 1] = ";"
         end
         out[#out + 1] = "}"
+        seen[value] = nil
     elseif t == "function" then
         local ok, dumped = pcall(string.dump, value, true)
         out[#out + 1] = "f:" .. (ok and (#dumped .. ":" .. dumped) or tostring(value))
+        if debug and debug.getupvalue then
+            local i = 1
+            while true do
+                local name, val = debug.getupvalue(value, i)
+                if name == nil then
+                    break
+                end
+                local vt = type(val)
+                if name ~= "_ENV" and val ~= _G and vt ~= "function" and vt ~= "thread" and vt ~= "userdata" then
+                    out[#out + 1] = "|u:" .. name .. "="
+                    serialize_for_hash(val, out, seen)
+                end
+                i = i + 1
+            end
+        end
     elseif t == "string" then
         out[#out + 1] = "s:" .. #value .. ":" .. value
     else
@@ -82,9 +104,9 @@ end
 function M.get_source_fingerprint(dir)
     local uv = get_uv()
     local root = dir or SOURCE_DIR
-    local max_sec, max_nsec, count = 0, 0, 0
+    local entries = {}
 
-    local function walk(d)
+    local function walk(d, prefix)
         local handle = uv.fs_scandir(d)
         if not handle then
             return
@@ -95,30 +117,27 @@ function M.get_source_fingerprint(dir)
                 break
             end
             local path = d .. "/" .. name
+            local rel = prefix == "" and name or (prefix .. "/" .. name)
             local st
             if not typ then
                 st = uv.fs_stat(path)
                 typ = st and st.type or nil
             end
             if typ == "directory" then
-                walk(path)
+                walk(path, rel)
             elseif name:sub(-4) == ".lua" then
                 st = st or uv.fs_stat(path)
                 if st and st.mtime then
-                    count = count + 1
-                    local sec = st.mtime.sec or 0
-                    local nsec = st.mtime.nsec or 0
-                    if sec > max_sec or (sec == max_sec and nsec > max_nsec) then
-                        max_sec = sec
-                        max_nsec = nsec
-                    end
+                    entries[#entries + 1] =
+                        str_format("%s:%d:%d:%d", rel, st.size or 0, st.mtime.sec or 0, st.mtime.nsec or 0)
                 end
             end
         end
     end
 
-    walk(root)
-    return str_format("%d:%d:%d", max_sec, max_nsec, count)
+    walk(root, "")
+    table.sort(entries)
+    return M.hash_string(table.concat(entries, "\n"))
 end
 
 function M.hash(opts, colors)

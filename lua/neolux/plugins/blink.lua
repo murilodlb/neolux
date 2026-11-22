@@ -1,22 +1,24 @@
 local M = {}
 
-function M.get(palette)
+function M.get(palette, opts)
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+
     return {
-        BlinkCmpMenu = { fg = palette.fg, bg = palette.gray1 },
-        BlinkCmpMenuBorder = { fg = palette.gray3, bg = palette.gray1 },
+        BlinkCmpMenu = { fg = palette.fg, bg = bgs.float },
+        BlinkCmpMenuBorder = { fg = palette.gray3, bg = bgs.float },
         BlinkCmpMenuSelection = { fg = palette.fg, bg = palette.gray2, bold = true },
         BlinkCmpScrollBarThumb = { bg = palette.gray3 },
-        BlinkCmpScrollBarGutter = { bg = palette.gray1 },
+        BlinkCmpScrollBarGutter = { bg = bgs.float },
         BlinkCmpLabel = { fg = palette.fg },
         BlinkCmpLabelDeprecated = { fg = palette.gray3, strikethrough = true },
         BlinkCmpLabelMatch = { fg = palette.green, bold = true },
         BlinkCmpLabelDetail = { fg = palette.gray3 },
         BlinkCmpLabelDescription = { fg = palette.gray3 },
-        BlinkCmpDoc = { fg = palette.fg, bg = palette.gray1 },
-        BlinkCmpDocBorder = { fg = palette.gray3, bg = palette.gray1 },
-        BlinkCmpDocSeparator = { fg = palette.gray2, bg = palette.gray1 },
-        BlinkCmpSignatureHelp = { fg = palette.fg, bg = palette.gray1 },
-        BlinkCmpSignatureHelpBorder = { fg = palette.gray3, bg = palette.gray1 },
+        BlinkCmpDoc = { fg = palette.fg, bg = bgs.float },
+        BlinkCmpDocBorder = { fg = palette.gray3, bg = bgs.float },
+        BlinkCmpDocSeparator = { fg = palette.gray2, bg = bgs.float },
+        BlinkCmpSignatureHelp = { fg = palette.fg, bg = bgs.float },
+        BlinkCmpSignatureHelpBorder = { fg = palette.gray3, bg = bgs.float },
         BlinkCmpGhostText = { fg = palette.gray3, italic = true },
 
         BlinkCmpKindDefault = { fg = palette.light_blue },

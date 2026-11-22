@@ -1,23 +1,24 @@
 local M = {}
 
 function M.get(palette, opts)
-    local bg = (opts and opts.transparent) and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local eob_fg = bgs.sidebar == "NONE" and palette.gray2 or bgs.sidebar
 
     return {
         -- Base & Windowing
-        NeoTreeNormal = { fg = palette.gray3, bg = bg },
-        NeoTreeNormalNC = { fg = palette.gray3, bg = bg },
-        NeoTreeSignColumn = { fg = palette.gray3, bg = bg },
-        NeoTreeWinSeparator = { fg = palette.gray1, bg = bg },
-        NeoTreeEndOfBuffer = { fg = palette.bg, bg = bg },
-        NeoTreeCursorLine = { bg = palette.gray1 },
+        NeoTreeNormal = { fg = palette.fg, bg = bgs.sidebar },
+        NeoTreeNormalNC = { fg = palette.fg, bg = bgs.sidebar },
+        NeoTreeSignColumn = { fg = palette.gray3, bg = bgs.sidebar },
+        NeoTreeWinSeparator = { fg = palette.gray2, bg = bgs.sidebar },
+        NeoTreeEndOfBuffer = { fg = eob_fg, bg = bgs.sidebar },
+        NeoTreeCursorLine = { bg = palette.gray2 },
         -- Structural Elements
-        NeoTreeRootName = { fg = palette.pink, bold = true },
-        NeoTreeDirectoryName = { fg = palette.fg },
+        NeoTreeRootName = { fg = palette.orange, bold = true },
+        NeoTreeDirectoryName = { fg = palette.light_blue },
         NeoTreeDirectoryIcon = { fg = palette.light_blue },
         NeoTreeDirIcon = { fg = palette.gray3 },
         NeoTreeExpander = { fg = palette.gray2 },
-        NeoTreeIndentMarker = { fg = palette.gray1 },
+        NeoTreeIndentMarker = { fg = palette.gray2 },
         NeoTreeSymbolicLinkTarget = { fg = palette.purple },
         -- File Names & States
         NeoTreeFileName = { fg = palette.fg },
@@ -39,8 +40,8 @@ function M.get(palette, opts)
         NeoTreeFileStats = { fg = palette.gray2 },
         NeoTreeFileStatsHeader = { fg = palette.gray3, bold = true },
         NeoTreeFilterTerm = { fg = palette.green, bold = true },
-        NeoTreeFloatTitle = { fg = palette.light_blue, bg = palette.gray1, bold = true },
-        NeoTreeFloatBorder = { fg = palette.gray3, bg = palette.gray1 },
+        NeoTreeFloatTitle = { fg = palette.light_blue, bg = bgs.float, bold = true },
+        NeoTreeFloatBorder = { fg = palette.gray3, bg = bgs.float },
     }
 end
 

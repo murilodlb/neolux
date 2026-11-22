@@ -3,15 +3,19 @@ local M = {}
 function M.get(palette, opts)
     palette = palette or require("neolux.palette")
     opts = opts or require("neolux.config").options
-    local bg = opts.transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local bg = bgs.bg
 
     return {
         -- 1. Base Editor UI
         Normal = { fg = palette.fg, bg = bg },
         NormalNC = { fg = palette.fg, bg = bg },
         NonText = { fg = palette.gray3 },
+        Conceal = { fg = palette.gray3 },
+        Whitespace = { fg = palette.gray2 },
+        SpecialKey = { fg = palette.gray3 },
         ColorColumn = { bg = palette.gray2 },
-        EndOfBuffer = { fg = palette.bg, bg = bg },
+        EndOfBuffer = { fg = opts.transparent and palette.gray2 or palette.bg, bg = bg },
         Directory = { fg = palette.light_blue, bold = true },
         Title = { fg = palette.light_blue, bold = true },
 
@@ -21,6 +25,11 @@ function M.get(palette, opts)
 
         -- 3. Cursor & Lines
         Cursor = { fg = palette.bg, bg = palette.orange },
+        lCursor = { link = "Cursor" },
+        CursorIM = { link = "Cursor" },
+        TermCursor = { fg = palette.bg, bg = palette.orange },
+        TermCursorNC = { fg = palette.bg, bg = palette.gray3 },
+        SnippetTabstop = { bg = palette.gray2 },
         CursorLine = { bg = palette.gray1 },
         CursorColumn = { link = "CursorLine" },
         LineNr = { fg = palette.gray2 },
@@ -51,20 +60,25 @@ function M.get(palette, opts)
         Search = { fg = palette.bg, bg = palette.yellow },
         IncSearch = { fg = palette.bg, bg = palette.orange, underline = true },
         CurSearch = { link = "IncSearch" },
+        Substitute = { fg = palette.bg, bg = palette.pink, bold = true },
+        QuickFixLine = { bg = palette.gray2, bold = true },
 
         -- 6. Pmenu (Popups like autocompletion)
-        Pmenu = { fg = palette.fg, bg = palette.gray1 },
+        Pmenu = { fg = palette.fg, bg = bgs.float },
         PmenuSel = { fg = palette.fg, bg = palette.gray2, bold = true },
-        PmenuKind = { fg = palette.light_blue, bg = palette.gray1 },
+        WildMenu = { link = "PmenuSel" },
+        PmenuKind = { fg = palette.light_blue, bg = bgs.float },
         PmenuKindSel = { fg = palette.light_blue, bg = palette.gray2, bold = true },
-        PmenuExtra = { fg = palette.gray3, bg = palette.gray1 },
+        PmenuExtra = { fg = palette.gray3, bg = bgs.float },
         PmenuExtraSel = { fg = palette.fg, bg = palette.gray2 },
-        PmenuMatch = { fg = palette.green, bg = palette.gray1, bold = true },
+        PmenuMatch = { fg = palette.green, bg = bgs.float, bold = true },
         PmenuMatchSel = { fg = palette.green, bg = palette.gray2, bold = true },
-        PmenuSbar = { bg = palette.gray1 },
+        PmenuSbar = { bg = bgs.float },
         PmenuThumb = { bg = palette.gray3 },
 
         -- 7. Messages
+        MsgArea = { fg = palette.fg, bg = bg },
+        MsgSeparator = { fg = palette.gray3, bg = bg },
         ErrorMsg = { fg = palette.fg, bg = palette.pink },
         WarningMsg = { fg = palette.pink, bold = true },
         MoreMsg = { fg = palette.yellow, bold = true },
@@ -72,7 +86,7 @@ function M.get(palette, opts)
         Question = { fg = palette.orange, bold = true },
 
         -- 8. Tabs
-        TabLineSel = { fg = palette.gray2, bg = palette.orange, bold = true },
+        TabLineSel = { fg = palette.bg, bg = palette.orange, bold = true },
         TabLine = { fg = palette.fg, bg = palette.gray1 },
         TabLineFill = { bg = palette.gray1 },
 
@@ -120,17 +134,11 @@ function M.get(palette, opts)
         SpellLocal = { undercurl = true, sp = palette.light_blue },
 
         -- 12. Floating Windows
-        NormalFloat = { fg = palette.fg, bg = palette.gray1 },
-        FloatBorder = { fg = palette.gray3, bg = palette.gray1 },
-        FloatTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
+        NormalFloat = { fg = palette.fg, bg = bgs.float },
+        FloatBorder = { fg = palette.gray3, bg = bgs.float },
+        FloatTitle = { fg = palette.orange, bg = bgs.float, bold = true },
+        FloatFooter = { fg = palette.gray3, bg = bgs.float },
     }
-end
-
-function M.setup(palette, opts)
-    local groups = M.get(palette, opts)
-    for group, settings in pairs(groups) do
-        vim.api.nvim_set_hl(0, group, settings)
-    end
 end
 
 return M

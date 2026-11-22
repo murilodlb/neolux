@@ -2,13 +2,13 @@ local M = {}
 
 function M.get(palette)
     return {
-        RainbowDelimiterYellow = { fg = palette.pink },
-        RainbowDelimiterOrange = { fg = palette.orange },
-        RainbowDelimiterRed = { fg = palette.yellow },
-        RainbowDelimiterCyan = { fg = palette.light_blue },
+        RainbowDelimiterRed = { fg = palette.pink },
+        RainbowDelimiterYellow = { fg = palette.yellow },
         RainbowDelimiterBlue = { fg = palette.blue },
-        RainbowDelimiterViolet = { fg = palette.purple },
+        RainbowDelimiterOrange = { fg = palette.orange },
         RainbowDelimiterGreen = { fg = palette.green },
+        RainbowDelimiterViolet = { fg = palette.purple },
+        RainbowDelimiterCyan = { fg = palette.light_blue },
     }
 end
 
