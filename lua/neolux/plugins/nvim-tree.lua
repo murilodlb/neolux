@@ -1,17 +1,17 @@
 local M = {}
 
 function M.get(palette, opts)
-    local transparent = opts and opts.transparent
-    local bg = transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local eob_fg = bgs.sidebar == "NONE" and palette.gray2 or bgs.sidebar
 
     return {
-        NvimTreeNormal = { fg = palette.fg, bg = bg },
-        NvimTreeNormalNC = { fg = palette.fg, bg = bg },
-        NvimTreeSignColumn = { fg = palette.fg, bg = bg },
-        NvimTreeWinSeparator = { fg = palette.gray2, bg = bg },
-        NvimTreeEndOfBuffer = { fg = palette.bg, bg = bg },
+        NvimTreeNormal = { fg = palette.fg, bg = bgs.sidebar },
+        NvimTreeNormalNC = { fg = palette.fg, bg = bgs.sidebar },
+        NvimTreeSignColumn = { fg = palette.fg, bg = bgs.sidebar },
+        NvimTreeWinSeparator = { fg = palette.gray2, bg = bgs.sidebar },
+        NvimTreeEndOfBuffer = { fg = eob_fg, bg = bgs.sidebar },
         NvimTreeCursorLine = { bg = palette.gray2 },
-        NvimTreeNormalFloat = { fg = palette.fg, bg = palette.gray1 },
+        NvimTreeNormalFloat = { fg = palette.fg, bg = bgs.float },
 
         NvimTreeRootFolder = { fg = palette.orange, bold = true },
         NvimTreeFolderName = { fg = palette.light_blue },

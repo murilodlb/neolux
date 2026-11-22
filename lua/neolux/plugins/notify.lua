@@ -1,6 +1,8 @@
 local M = {}
 
-function M.get(palette)
+function M.get(palette, opts)
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+
     local hl = {
         NotifyBackground = { bg = palette.bg },
     }
@@ -13,10 +15,10 @@ function M.get(palette)
         TRACE = palette.purple,
     }
     for level, color in pairs(levels) do
-        hl["Notify" .. level .. "Border"] = { fg = color, bg = palette.gray1 }
-        hl["Notify" .. level .. "Icon"] = { fg = color, bg = palette.gray1 }
-        hl["Notify" .. level .. "Title"] = { fg = color, bg = palette.gray1, bold = true }
-        hl["Notify" .. level .. "Body"] = { fg = palette.fg, bg = palette.gray1 }
+        hl["Notify" .. level .. "Border"] = { fg = color, bg = bgs.float }
+        hl["Notify" .. level .. "Icon"] = { fg = color, bg = bgs.float }
+        hl["Notify" .. level .. "Title"] = { fg = color, bg = bgs.float, bold = true }
+        hl["Notify" .. level .. "Body"] = { fg = palette.fg, bg = bgs.float }
     end
 
     return hl

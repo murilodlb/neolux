@@ -1,8 +1,8 @@
 local M = {}
 
 function M.get(palette, opts)
-    local transparent = opts and opts.transparent
-    local bg = transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local bg = bgs.bg
 
     local hl = {
         -- mini.indentscope
@@ -10,27 +10,27 @@ function M.get(palette, opts)
         MiniIndentscopePrefix = { nocombine = true },
 
         -- mini.files
-        MiniFilesNormal = { fg = palette.fg, bg = palette.gray1 },
-        MiniFilesBorder = { fg = palette.gray3, bg = palette.gray1 },
-        MiniFilesBorderModified = { fg = palette.yellow, bg = palette.gray1 },
+        MiniFilesNormal = { fg = palette.fg, bg = bgs.float },
+        MiniFilesBorder = { fg = palette.gray3, bg = bgs.float },
+        MiniFilesBorderModified = { fg = palette.yellow, bg = bgs.float },
         MiniFilesCursorLine = { bg = palette.gray2 },
         MiniFilesDirectory = { fg = palette.light_blue },
         MiniFilesFile = { fg = palette.fg },
-        MiniFilesTitle = { fg = palette.gray3, bg = palette.gray1 },
-        MiniFilesTitleFocused = { fg = palette.orange, bg = palette.gray1, bold = true },
+        MiniFilesTitle = { fg = palette.gray3, bg = bgs.float },
+        MiniFilesTitleFocused = { fg = palette.orange, bg = bgs.float, bold = true },
 
         -- mini.pick
-        MiniPickNormal = { fg = palette.fg, bg = palette.gray1 },
-        MiniPickBorder = { fg = palette.gray3, bg = palette.gray1 },
-        MiniPickBorderBusy = { fg = palette.orange, bg = palette.gray1 },
-        MiniPickBorderText = { fg = palette.light_blue, bg = palette.gray1, bold = true },
+        MiniPickNormal = { fg = palette.fg, bg = bgs.float },
+        MiniPickBorder = { fg = palette.gray3, bg = bgs.float },
+        MiniPickBorderBusy = { fg = palette.orange, bg = bgs.float },
+        MiniPickBorderText = { fg = palette.light_blue, bg = bgs.float, bold = true },
         MiniPickHeader = { fg = palette.light_blue, bold = true },
         MiniPickMatchCurrent = { bg = palette.gray2, bold = true },
         MiniPickMatchMarked = { fg = palette.purple, bg = palette.gray2 },
         MiniPickMatchRanges = { fg = palette.green, bold = true },
         MiniPickPreviewLine = { bg = palette.gray2 },
         MiniPickPreviewRegion = { bg = palette.tint_blue },
-        MiniPickPrompt = { fg = palette.orange, bg = palette.gray1, bold = true },
+        MiniPickPrompt = { fg = palette.orange, bg = bgs.float, bold = true },
 
         -- mini.diff
         MiniDiffSignAdd = { fg = palette.green, bg = bg },
@@ -42,12 +42,12 @@ function M.get(palette, opts)
         MiniDiffOverDelete = { bg = palette.tint_pink },
 
         -- mini.statusline
-        MiniStatuslineModeNormal = { fg = palette.dark_blue, bg = palette.light_blue, bold = true },
-        MiniStatuslineModeInsert = { fg = palette.dark_blue, bg = palette.green, bold = true },
-        MiniStatuslineModeVisual = { fg = palette.dark_blue, bg = palette.orange, bold = true },
-        MiniStatuslineModeReplace = { fg = palette.dark_blue, bg = palette.pink, bold = true },
-        MiniStatuslineModeCommand = { fg = palette.dark_blue, bg = palette.yellow, bold = true },
-        MiniStatuslineModeOther = { fg = palette.dark_blue, bg = palette.blue, bold = true },
+        MiniStatuslineModeNormal = { fg = palette.bg, bg = palette.light_blue, bold = true },
+        MiniStatuslineModeInsert = { fg = palette.bg, bg = palette.green, bold = true },
+        MiniStatuslineModeVisual = { fg = palette.bg, bg = palette.orange, bold = true },
+        MiniStatuslineModeReplace = { fg = palette.bg, bg = palette.pink, bold = true },
+        MiniStatuslineModeCommand = { fg = palette.bg, bg = palette.yellow, bold = true },
+        MiniStatuslineModeOther = { fg = palette.bg, bg = palette.blue, bold = true },
         MiniStatuslineDevinfo = { fg = palette.fg, bg = palette.gray2 },
         MiniStatuslineFileinfo = { fg = palette.fg, bg = palette.gray2 },
         MiniStatuslineFilename = { fg = palette.fg, bg = palette.gray1 },
@@ -56,17 +56,17 @@ function M.get(palette, opts)
         -- mini.tabline
         MiniTablineCurrent = { fg = palette.fg, bg = palette.gray2, bold = true },
         MiniTablineVisible = { fg = palette.beige, bg = palette.gray1 },
-        MiniTablineHidden = { fg = palette.gray3, bg = palette.bg },
+        MiniTablineHidden = { fg = palette.gray3, bg = bg },
         MiniTablineModifiedCurrent = { fg = palette.orange, bg = palette.gray2, bold = true },
         MiniTablineModifiedVisible = { fg = palette.orange, bg = palette.gray1 },
-        MiniTablineModifiedHidden = { fg = palette.yellow, bg = palette.bg },
-        MiniTablineFill = { bg = palette.bg },
+        MiniTablineModifiedHidden = { fg = palette.yellow, bg = bg },
+        MiniTablineFill = { bg = bg },
         MiniTablineTabpagesection = { fg = palette.bg, bg = palette.light_blue, bold = true },
 
         -- mini.notify
-        MiniNotifyNormal = { fg = palette.fg, bg = palette.gray1 },
-        MiniNotifyBorder = { fg = palette.gray3, bg = palette.gray1 },
-        MiniNotifyTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
+        MiniNotifyNormal = { fg = palette.fg, bg = bgs.float },
+        MiniNotifyBorder = { fg = palette.gray3, bg = bgs.float },
+        MiniNotifyTitle = { fg = palette.orange, bg = bgs.float, bold = true },
 
         -- mini.hipatterns
         MiniHipatternsFixme = { fg = palette.bg, bg = palette.pink, bold = true },

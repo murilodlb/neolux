@@ -1,13 +1,13 @@
 local M = {}
 
 function M.get(palette, opts)
-    local transparent = opts and opts.transparent
-    local bg = transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local eob_fg = bgs.sidebar == "NONE" and palette.gray2 or bgs.sidebar
 
     return {
-        DiffviewNormal = { fg = palette.fg, bg = bg },
-        DiffviewWinSeparator = { fg = palette.gray2, bg = bg },
-        DiffviewEndOfBuffer = { fg = palette.bg, bg = bg },
+        DiffviewNormal = { fg = palette.fg, bg = bgs.sidebar },
+        DiffviewWinSeparator = { fg = palette.gray2, bg = bgs.sidebar },
+        DiffviewEndOfBuffer = { fg = eob_fg, bg = bgs.sidebar },
         DiffviewCursorLine = { bg = palette.gray2 },
         DiffviewDim1 = { fg = palette.gray3 },
         DiffviewPrimary = { fg = palette.orange },

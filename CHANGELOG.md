@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2026-11-22
+
+### Added
+- **Granular Float & Sidebar Styles (`lua/neolux/config.lua`, `lua/neolux/editor.lua`, `lua/neolux/plugins/`)**: Added `styles.floats` (default: `"dark"`) and `styles.sidebars` (default: `"normal"`) accepting `"dark"`, `"transparent"`, or `"normal"`, powered by `config.resolve_bgs` across floating windows, popups, pickers, and sidebars while keeping `NotifyBackground` opaque.
+- **Single-Source Extras Generator & New CLI Themes (`scripts/generate_extras.lua`, `extras/fzf/`, `extras/tmux/`)**: Added a headless generator that builds all 7 theme files under `extras/` directly from `palette.lua` and `config.lua` (with `NEOLUX_EXTRAS_CHECK=1` wired into CI to prevent drift), and introduced official `fzf` (`extras/fzf/neolux.sh`) and `tmux` (`extras/tmux/neolux.tmux`) extras.
+- **Expanded Tree-sitter & LSP Semantic Token Coverage (`lua/neolux/syntax.lua`)**: Added modern Tree-sitter captures (`@comment.error`/`warning`/`todo`/`note`/`documentation`, `@diff.*`, `@markup.math`/`quote`/`strikethrough`/`environment`, `@function.macro`, `@number.float`, `@keyword.modifier`, `@string.special.*`), expanded `@lsp.type.*` / `@lsp.typemod.*` / `@lsp.mod.deprecated` definitions, and explicitly cleared `@lsp.type.variable` and `@lsp.type.comment` so semantic tokens do not flatten richer Tree-sitter highlights.
+- **Core Neovim UI Groups (`lua/neolux/editor.lua`)**: Added `Conceal`, `Whitespace`, `SpecialKey`, `lCursor`, `CursorIM`, `TermCursor`, `TermCursorNC`, `SnippetTabstop`, `Substitute`, `QuickFixLine`, `WildMenu`, `MsgArea`, `MsgSeparator`, and `FloatFooter`.
+- **Multi-Language Documentation (`README.md`, `README.en.md`, `README.es.md`)**: Expanded the README with full configuration options, supported plugins, terminal extras, and benchmark metrics, and added English and Spanish translations.
+- **Regression Tests (`tests/run.lua`)**: Added tests covering closure upvalue hashing, older-`mtime`/size source fingerprinting, ANSI terminal parity, dangling link checks across `editor.lua` and `syntax.lua`, `styles.floats`/`styles.sidebars` modes, transparent surfaces, and generated `extras/` validation.
+
+### Changed
+- **Terminal ANSI Palette Sync (`lua/neolux/palette.lua`, `lua/neolux/config.lua`)**: Added `red`, `bright_green`, `bright_yellow`, `bright_purple`, `bright_cyan`, and `bright_white` to the palette and aligned `terminal_color_0`–`15` with the 16-color ANSI palette in `extras/`.
+- **Source Fingerprinting & Cache Version (`lua/neolux/compiler.lua`)**: Replaced max-`mtime` tracking with a sorted hash of every `.lua` file's relative path, size, and `mtime` (catching branch switches and older restored timestamps), and bumped `CACHE_FORMAT_VERSION` to `3`.
+- **Dynamic Plugin Registry & Cleanup (`lua/neolux/config.lua`, `lua/neolux/editor.lua`, `lua/neolux/syntax.lua`, `lua/neolux/plugins/init.lua`)**: Derived `plugin_repos` and `plugin_modules` dynamically from `plugin_map` and removed unused `M.setup` functions.
+- **Statusline, Tabline & File Explorer Consistency (`lua/lualine/themes/neolux.lua`, `lua/neolux/editor.lua`, `lua/neolux/plugins/`)**: Switched active mode badge text in `lualine` and `mini.statusline` and `TabLineSel` foreground to `#000000` (`palette.bg`) for sharper contrast, and aligned `neo-tree.lua` colors and separators with `nvim-tree.lua`.
+
+### Fixed
+- **Bytecode Compiler Directory Scan & Closure Upvalues (`lua/neolux/compiler.lua`)**: Fixed `fs_scandir_next` return truncation that caused redundant `fs_stat` calls on every entry, and updated `serialize_for_hash` to inspect callback upvalues (with table cycle protection) so editing captured local variables properly invalidates the cache.
+- **Transparent Mode Blind Spots (`lua/neolux/editor.lua`, `lua/lualine/themes/neolux.lua`, `lua/neolux/plugins/`)**: Cleared backgrounds in transparent mode for `TelescopePreview*`, `BufferLine*`, `MiniTabline*`, and `lualine`, and switched `EndOfBuffer` foreground to `palette.gray2` when transparent so `~` markers do not appear as harsh black glyphs.
+- **Rainbow Delimiters Color Mapping (`lua/neolux/plugins/rainbow-delimiters.lua`)**: Fixed swapped `RainbowDelimiterYellow` and `RainbowDelimiterRed` assignments so each group matches its semantic color name.
+- **Documentation & Asset Hex Drift (`doc/neolux.txt`, `media/logo.html`)**: Updated `purple` in Vimdoc (`#9c6de7`) and `.c-light-blue` in `media/logo.html` (`#55efef`) to match `palette.lua`, and documented `styles.floats` and `styles.sidebars` in `doc/neolux.txt`.
+
 ## [0.0.5] - 2026-11-19
 
 ### Added

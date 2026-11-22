@@ -52,13 +52,4 @@ function M.get(palette, opts)
     return highlights
 end
 
-function M.setup(palette, opts)
-    palette = palette or require("neolux.palette")
-    opts = opts or config.options
-    local groups = M.get(palette, opts)
-    for group, settings in pairs(groups) do
-        vim.api.nvim_set_hl(0, group, settings)
-    end
-end
-
 return M

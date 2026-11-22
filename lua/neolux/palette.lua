@@ -10,9 +10,17 @@ local colors = {
     green = "#2fff73", -- Function names
     pink = "#f84285", -- For, while, from, keywords
     yellow = "#ffcc00", -- Brackets [, (, etc.
-    purple = "#723ec3", -- None, NULL, inner brackets
+    purple = "#9c6de7", -- None, NULL, inner brackets
     blue = "#2495ff", -- Inner brackets
     dark_blue = "#044b8b", -- Some text colors
+
+    -- ANSI terminal palette colors (matching extras/)
+    red = "#c5003c",
+    bright_green = "#5cd85a",
+    bright_yellow = "#f3e600",
+    bright_purple = "#8b53fe",
+    bright_cyan = "#88dddd",
+    bright_white = "#f5f1e8",
 
     -- Dark subtle tints for diagnostics & diff backgrounds on pure black
     tint_pink = "#2a0a16", -- Subtle red/pink tint (errors, deletions)

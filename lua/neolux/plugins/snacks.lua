@@ -1,19 +1,19 @@
 local M = {}
 
 function M.get(palette, opts)
-    local transparent = opts and opts.transparent
-    local bg = transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
+    local bg = bgs.bg
 
     local hl = {
         -- Picker
-        SnacksPicker = { fg = palette.fg, bg = palette.gray1 },
-        SnacksPickerBorder = { fg = palette.gray3, bg = palette.gray1 },
-        SnacksPickerTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
-        SnacksPickerInput = { fg = palette.fg, bg = palette.gray1 },
-        SnacksPickerInputBorder = { fg = palette.orange, bg = palette.gray1 },
-        SnacksPickerInputTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
+        SnacksPicker = { fg = palette.fg, bg = bgs.float },
+        SnacksPickerBorder = { fg = palette.gray3, bg = bgs.float },
+        SnacksPickerTitle = { fg = palette.orange, bg = bgs.float, bold = true },
+        SnacksPickerInput = { fg = palette.fg, bg = bgs.float },
+        SnacksPickerInputBorder = { fg = palette.orange, bg = bgs.float },
+        SnacksPickerInputTitle = { fg = palette.orange, bg = bgs.float, bold = true },
         SnacksPickerPrompt = { fg = palette.orange, bold = true },
-        SnacksPickerList = { fg = palette.fg, bg = palette.gray1 },
+        SnacksPickerList = { fg = palette.fg, bg = bgs.float },
         SnacksPickerListCursorLine = { bg = palette.gray2 },
         SnacksPickerPreview = { fg = palette.fg, bg = bg },
         SnacksPickerPreviewBorder = { fg = palette.gray3, bg = bg },
@@ -45,10 +45,10 @@ function M.get(palette, opts)
         SnacksIndentChunk = { fg = palette.gray3 },
 
         -- Input
-        SnacksInputNormal = { fg = palette.fg, bg = palette.gray1 },
-        SnacksInputBorder = { fg = palette.orange, bg = palette.gray1 },
-        SnacksInputTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
-        SnacksInputIcon = { fg = palette.orange, bg = palette.gray1 },
+        SnacksInputNormal = { fg = palette.fg, bg = bgs.float },
+        SnacksInputBorder = { fg = palette.orange, bg = bgs.float },
+        SnacksInputTitle = { fg = palette.orange, bg = bgs.float, bold = true },
+        SnacksInputIcon = { fg = palette.orange, bg = bgs.float },
     }
 
     local notifier_levels = {
@@ -59,11 +59,11 @@ function M.get(palette, opts)
         Trace = palette.purple,
     }
     for level, color in pairs(notifier_levels) do
-        hl["SnacksNotifier" .. level] = { fg = palette.fg, bg = palette.gray1 }
-        hl["SnacksNotifierBorder" .. level] = { fg = color, bg = palette.gray1 }
-        hl["SnacksNotifierTitle" .. level] = { fg = color, bg = palette.gray1, bold = true }
-        hl["SnacksNotifierIcon" .. level] = { fg = color, bg = palette.gray1 }
-        hl["SnacksNotifierFooter" .. level] = { fg = palette.gray3, bg = palette.gray1 }
+        hl["SnacksNotifier" .. level] = { fg = palette.fg, bg = bgs.float }
+        hl["SnacksNotifierBorder" .. level] = { fg = color, bg = bgs.float }
+        hl["SnacksNotifierTitle" .. level] = { fg = color, bg = bgs.float, bold = true }
+        hl["SnacksNotifierIcon" .. level] = { fg = color, bg = bgs.float }
+        hl["SnacksNotifierFooter" .. level] = { fg = palette.gray3, bg = bgs.float }
     end
 
     return hl

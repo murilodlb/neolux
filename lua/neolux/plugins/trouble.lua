@@ -1,12 +1,11 @@
 local M = {}
 
 function M.get(palette, opts)
-    local transparent = opts and opts.transparent
-    local bg = transparent and "NONE" or palette.bg
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
 
     return {
-        TroubleNormal = { fg = palette.fg, bg = bg },
-        TroubleNormalNC = { fg = palette.fg, bg = bg },
+        TroubleNormal = { fg = palette.fg, bg = bgs.sidebar },
+        TroubleNormalNC = { fg = palette.fg, bg = bgs.sidebar },
         TroubleText = { fg = palette.fg },
         TroubleCount = { fg = palette.pink, bg = palette.gray1, bold = true },
         TroubleCode = { fg = palette.gray3 },

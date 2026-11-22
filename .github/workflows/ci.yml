@@ -50,6 +50,13 @@ jobs:
             -c "lua dofile('tests/run.lua')" \
             -c "qa!"
 
+      - name: Check extras sync
+        run: |
+          NEOLUX_EXTRAS_CHECK=1 nvim --clean --headless -u NONE \
+            --cmd "set rtp^=." \
+            -c "luafile scripts/generate_extras.lua" \
+            -c "qa!"
+
       - name: Run checkhealth and help tags verification
         run: |
           nvim --headless -u NONE \

@@ -1,22 +1,24 @@
 local M = {}
 
-function M.get(palette)
-    local hl = {
-        NoiceCmdline = { fg = palette.fg, bg = palette.gray1 },
-        NoiceCmdlinePopup = { fg = palette.fg, bg = palette.gray1 },
-        NoiceCmdlinePopupBorder = { fg = palette.orange, bg = palette.gray1 },
-        NoiceCmdlinePopupTitle = { fg = palette.orange, bg = palette.gray1, bold = true },
-        NoiceCmdlineIcon = { fg = palette.orange, bg = palette.gray1 },
+function M.get(palette, opts)
+    local bgs = require("neolux.config").resolve_bgs(palette, opts)
 
-        NoiceConfirm = { fg = palette.fg, bg = palette.gray1 },
-        NoiceConfirmBorder = { fg = palette.orange, bg = palette.gray1 },
-        NoicePopup = { fg = palette.fg, bg = palette.gray1 },
-        NoicePopupBorder = { fg = palette.gray3, bg = palette.gray1 },
-        NoicePopupmenu = { fg = palette.fg, bg = palette.gray1 },
+    local hl = {
+        NoiceCmdline = { fg = palette.fg, bg = bgs.float },
+        NoiceCmdlinePopup = { fg = palette.fg, bg = bgs.float },
+        NoiceCmdlinePopupBorder = { fg = palette.orange, bg = bgs.float },
+        NoiceCmdlinePopupTitle = { fg = palette.orange, bg = bgs.float, bold = true },
+        NoiceCmdlineIcon = { fg = palette.orange, bg = bgs.float },
+
+        NoiceConfirm = { fg = palette.fg, bg = bgs.float },
+        NoiceConfirmBorder = { fg = palette.orange, bg = bgs.float },
+        NoicePopup = { fg = palette.fg, bg = bgs.float },
+        NoicePopupBorder = { fg = palette.gray3, bg = bgs.float },
+        NoicePopupmenu = { fg = palette.fg, bg = bgs.float },
         NoicePopupmenuSelected = { bg = palette.gray2, bold = true },
-        NoicePopupmenuBorder = { fg = palette.gray3, bg = palette.gray1 },
+        NoicePopupmenuBorder = { fg = palette.gray3, bg = bgs.float },
         NoicePopupmenuMatch = { fg = palette.green, bold = true },
-        NoiceMini = { fg = palette.fg, bg = palette.gray1 },
+        NoiceMini = { fg = palette.fg, bg = bgs.float },
 
         NoiceLspProgressTitle = { fg = palette.fg },
         NoiceLspProgressClient = { fg = palette.light_blue, bold = true },
@@ -33,9 +35,9 @@ function M.get(palette)
         Help = palette.green,
     }
     for mode, color in pairs(cmdline_modes) do
-        hl["NoiceCmdlinePopupBorder" .. mode] = { fg = color, bg = palette.gray1 }
-        hl["NoiceCmdlinePopupTitle" .. mode] = { fg = color, bg = palette.gray1, bold = true }
-        hl["NoiceCmdlineIcon" .. mode] = { fg = color, bg = palette.gray1 }
+        hl["NoiceCmdlinePopupBorder" .. mode] = { fg = color, bg = bgs.float }
+        hl["NoiceCmdlinePopupTitle" .. mode] = { fg = color, bg = bgs.float, bold = true }
+        hl["NoiceCmdlineIcon" .. mode] = { fg = color, bg = bgs.float }
     end
 
     return hl
